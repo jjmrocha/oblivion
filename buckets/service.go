@@ -3,7 +3,7 @@ package buckets
 import (
 	"fmt"
 
-	"github.com/jjmrocha/oblivion/infra"
+	"github.com/jjmrocha/oblivion/exceptions"
 )
 
 type BucketService struct {
@@ -21,8 +21,23 @@ func (s *BucketService) CreateBucket(name string) (*Bucket, error) {
 	_, err := s.Repository.GetBucket(name)
 	if err == nil {
 		reason := fmt.Sprintf("Bucket %v already exists", name)
-		return nil, infra.NewErroWithReason(infra.BucketAlreadyExits, reason)
+		return nil, exceptions.NewErroWithReason(exceptions.BucketAlreadyExits, reason)
 	}
 
 	return s.Repository.CreateBucket(name)
+}
+
+func (s *BucketService) BucketList() ([]string, error) {
+	bucketList, err := s.Repository.GetAllBuckets()
+	if err != nil {
+		return nil, exceptions.NewErroWithReason(exceptions.UnexpectedError, err.Error())
+	}
+
+	bucketNames := make([]string, 0, len(bucketList))
+
+	for _, bucket := range bucketList {
+		bucketNames = append(bucketNames, bucket.Name)
+	}
+
+	return bucketNames, nil
 }

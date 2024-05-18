@@ -3,7 +3,7 @@ package buckets
 import (
 	"fmt"
 
-	"github.com/jjmrocha/oblivion/infra"
+	"github.com/jjmrocha/oblivion/exceptions"
 )
 
 type inMemoryBucket map[string]any
@@ -23,7 +23,7 @@ func NewInMemoryRepo() *InMemoryRepo {
 func (r *InMemoryRepo) CreateBucket(name string) (*Bucket, error) {
 	if _, found := r.storage[name]; found {
 		reason := fmt.Sprintf("Bucket %v already exists", name)
-		return nil, infra.NewErroWithReason(infra.BucketNotFound, reason)
+		return nil, exceptions.NewErroWithReason(exceptions.BucketNotFound, reason)
 	}
 
 	r.storage[name] = make(inMemoryBucket)
@@ -38,7 +38,7 @@ func (r *InMemoryRepo) CreateBucket(name string) (*Bucket, error) {
 func (r *InMemoryRepo) GetBucket(name string) (*Bucket, error) {
 	if _, found := r.storage[name]; !found {
 		reason := fmt.Sprintf("bucket %v doesn't exists", name)
-		return nil, infra.NewErroWithReason(infra.BucketNotFound, reason)
+		return nil, exceptions.NewErroWithReason(exceptions.BucketNotFound, reason)
 	}
 
 	bucket := Bucket{
@@ -46,4 +46,18 @@ func (r *InMemoryRepo) GetBucket(name string) (*Bucket, error) {
 	}
 
 	return &bucket, nil
+}
+
+func (r *InMemoryRepo) GetAllBuckets() ([]*Bucket, error) {
+	bucketList := make([]*Bucket, 0)
+
+	for bucketName, _ := range r.storage {
+		bucket := Bucket{
+			Name: bucketName,
+		}
+
+		bucketList = append(bucketList, &bucket)
+	}
+
+	return bucketList, nil
 }

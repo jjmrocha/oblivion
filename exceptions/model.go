@@ -1,4 +1,4 @@
-package infra
+package exceptions
 
 import (
 	"net/http"

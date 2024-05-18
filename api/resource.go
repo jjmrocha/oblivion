@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	"github.com/jjmrocha/oblivion/buckets"
-	"github.com/jjmrocha/oblivion/infra"
+	"github.com/jjmrocha/oblivion/exceptions"
 )
 
 type Api struct {
@@ -19,6 +19,7 @@ func NewApi(bucketService *buckets.BucketService) *Api {
 	api := Api{
 		bucketService: bucketService,
 	}
+
 	return &api
 }
 
@@ -27,7 +28,7 @@ func (api *Api) CreateBucket(w http.ResponseWriter, req *http.Request) {
 
 	err := json.NewDecoder(req.Body).Decode(&request)
 	if err != nil {
-		writeJSONErrorResponse(w, infra.NewError(infra.BadRequestPaylod))
+		writeJSONErrorResponse(w, exceptions.NewError(exceptions.BadRequestPaylod))
 		return
 	}
 
@@ -40,11 +41,18 @@ func (api *Api) CreateBucket(w http.ResponseWriter, req *http.Request) {
 	response := CreateBucketResponse{
 		Name: bucket.Name,
 	}
+
 	writeJSONResponse(w, http.StatusCreated, &response)
 }
 
 func (api *Api) GetAllBuckets(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprintf(w, "Welcome to the home page!")
+	bucketNames, err := api.bucketService.BucketList()
+	if err != nil {
+		writeJSONErrorResponse(w, err)
+		return
+	}
+
+	writeJSONResponse(w, http.StatusCreated, bucketNames)
 }
 
 func (api *Api) GetBucket(w http.ResponseWriter, req *http.Request) {
@@ -68,10 +76,10 @@ func (api *Api) DeleteKey(w http.ResponseWriter, req *http.Request) {
 }
 
 func writeJSONErrorResponse(w http.ResponseWriter, err error) {
-	errorType := infra.UnexpectedError
+	errorType := exceptions.UnexpectedError
 	reason := err.Error()
 
-	var target *infra.AppError
+	var target *exceptions.AppError
 	if errors.As(err, &target) {
 		errorType = target.ErrorType
 		reason = target.String()
