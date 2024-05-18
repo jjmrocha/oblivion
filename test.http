@@ -1,0 +1,16 @@
+@BaseURL = http://localhost:9090
+
+####
+
+GET {{BaseURL}}/v1/buckets
+
+#####
+
+@BucketName = people
+
+POST {{BaseURL}}/v1/buckets
+Content-Type: application/json
+
+{
+  "name": "{{BucketName}}"
+}
