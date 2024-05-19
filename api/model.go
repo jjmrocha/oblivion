@@ -10,6 +10,6 @@ type CreateBucketRequest struct {
 	Name string `json:"name"`
 }
 
-type CreateBucketResponse struct {
+type BucketResponse struct {
 	Name string `json:"name"`
 }

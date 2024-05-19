@@ -17,16 +17,6 @@ func NewBucketService(repo Repository) *BucketService {
 	return &service
 }
 
-func (s *BucketService) CreateBucket(name string) (*Bucket, error) {
-	_, err := s.Repository.GetBucket(name)
-	if err == nil {
-		reason := fmt.Sprintf("Bucket %v already exists", name)
-		return nil, exceptions.NewErroWithReason(exceptions.BucketAlreadyExits, reason)
-	}
-
-	return s.Repository.CreateBucket(name)
-}
-
 func (s *BucketService) BucketList() ([]string, error) {
 	bucketList, err := s.Repository.GetAllBuckets()
 	if err != nil {
@@ -40,4 +30,24 @@ func (s *BucketService) BucketList() ([]string, error) {
 	}
 
 	return bucketNames, nil
+}
+
+func (s *BucketService) CreateBucket(name string) (*Bucket, error) {
+	_, err := s.Repository.GetBucket(name)
+	if err == nil {
+		reason := fmt.Sprintf("Bucket %v already exists", name)
+		return nil, exceptions.NewErroWithReason(exceptions.BucketAlreadyExits, reason)
+	}
+
+	return s.Repository.CreateBucket(name)
+}
+
+func (s *BucketService) GetBucket(name string) (*Bucket, error) {
+	bucket, err := s.Repository.GetBucket(name)
+	if err != nil {
+		reason := fmt.Sprintf("Bucket %v doesn't exists", name)
+		return nil, exceptions.NewErroWithReason(exceptions.BucketNotFound, reason)
+	}
+
+	return bucket, nil
 }

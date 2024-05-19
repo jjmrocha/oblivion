@@ -20,6 +20,20 @@ func NewInMemoryRepo() *InMemoryRepo {
 	return &repo
 }
 
+func (r *InMemoryRepo) GetAllBuckets() ([]*Bucket, error) {
+	bucketList := make([]*Bucket, 0)
+
+	for bucketName := range r.storage {
+		bucket := Bucket{
+			Name: bucketName,
+		}
+
+		bucketList = append(bucketList, &bucket)
+	}
+
+	return bucketList, nil
+}
+
 func (r *InMemoryRepo) CreateBucket(name string) (*Bucket, error) {
 	if _, found := r.storage[name]; found {
 		reason := fmt.Sprintf("Bucket %v already exists", name)
@@ -46,18 +60,4 @@ func (r *InMemoryRepo) GetBucket(name string) (*Bucket, error) {
 	}
 
 	return &bucket, nil
-}
-
-func (r *InMemoryRepo) GetAllBuckets() ([]*Bucket, error) {
-	bucketList := make([]*Bucket, 0)
-
-	for bucketName, _ := range r.storage {
-		bucket := Bucket{
-			Name: bucketName,
-		}
-
-		bucketList = append(bucketList, &bucket)
-	}
-
-	return bucketList, nil
 }

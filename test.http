@@ -15,7 +15,13 @@ Content-Type: application/json
   "name": "{{BucketName}}"
 }
 
-
 #####
 
 GET {{BaseURL}}/v1/buckets
+
+#####
+
+GET {{BaseURL}}/v1/buckets/{{BucketName}}
+
+####
+

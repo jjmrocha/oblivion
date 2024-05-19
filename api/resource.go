@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -38,7 +37,7 @@ func (api *Api) CreateBucket(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	response := CreateBucketResponse{
+	response := BucketResponse{
 		Name: bucket.Name,
 	}
 
@@ -56,7 +55,19 @@ func (api *Api) GetAllBuckets(w http.ResponseWriter, req *http.Request) {
 }
 
 func (api *Api) GetBucket(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprintf(w, "Welcome to the home page!")
+	bucketName := req.PathValue("bucket")
+
+	bucket, err := api.bucketService.Repository.GetBucket(bucketName)
+	if err != nil {
+		writeJSONErrorResponse(w, err)
+		return
+	}
+
+	paylod := BucketResponse{
+		Name: bucket.Name,
+	}
+
+	writeJSONResponse(w, http.StatusOK, &paylod)
 }
 
 func (api *Api) DeleteBucket(w http.ResponseWriter, req *http.Request) {
@@ -79,10 +90,9 @@ func writeJSONErrorResponse(w http.ResponseWriter, err error) {
 	errorType := exceptions.UnexpectedError
 	reason := err.Error()
 
-	var target *exceptions.AppError
-	if errors.As(err, &target) {
-		errorType = target.ErrorType
-		reason = target.String()
+	if appErr, ok := err.(*exceptions.AppError); ok {
+		errorType = appErr.ErrorType
+		reason = appErr.String()
 	}
 
 	statusCode := errorType.StatusCode()
