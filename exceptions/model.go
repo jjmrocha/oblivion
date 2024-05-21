@@ -49,12 +49,7 @@ type AppError struct {
 }
 
 func NewError(errorType ErrorType, args ...any) error {
-	errorDesc := fmt.Sprintf(errorTypeDefMap[errorType].description, args...)
-	err := AppError{
-		ErrorType:   errorType,
-		Description: errorDesc,
-	}
-	return &err
+	return NewErroWithReason(errorType, nil, args...)
 }
 
 func NewErroWithReason(errorType ErrorType, reason error, args ...any) error {
@@ -72,7 +67,7 @@ func (e *AppError) String() string {
 }
 
 func (e *AppError) Error() string {
-	return fmt.Sprintf("%v:%v", e.ErrorType, e.Description)
+	return fmt.Sprintf("%v: %v", e.ErrorType, e.Description)
 }
 
 func (t ErrorType) ErrorCode() int {
