@@ -1,8 +1,6 @@
 package buckets
 
 import (
-	"fmt"
-
 	"github.com/jjmrocha/oblivion/exceptions"
 )
 
@@ -20,7 +18,7 @@ func NewBucketService(repo Repository) *BucketService {
 func (s *BucketService) BucketList() ([]string, error) {
 	bucketList, err := s.Repository.GetAllBuckets()
 	if err != nil {
-		return nil, exceptions.NewErroWithReason(exceptions.UnexpectedError, err.Error())
+		return nil, exceptions.NewErroWithReason(exceptions.UnexpectedError, err)
 	}
 
 	bucketNames := make([]string, 0, len(bucketList))
@@ -35,8 +33,7 @@ func (s *BucketService) BucketList() ([]string, error) {
 func (s *BucketService) CreateBucket(name string) (*Bucket, error) {
 	_, err := s.Repository.GetBucket(name)
 	if err == nil {
-		reason := fmt.Sprintf("Bucket %v already exists", name)
-		return nil, exceptions.NewErroWithReason(exceptions.BucketAlreadyExits, reason)
+		return nil, exceptions.NewError(exceptions.BucketAlreadyExits, name)
 	}
 
 	return s.Repository.CreateBucket(name)
@@ -45,8 +42,7 @@ func (s *BucketService) CreateBucket(name string) (*Bucket, error) {
 func (s *BucketService) GetBucket(name string) (*Bucket, error) {
 	bucket, err := s.Repository.GetBucket(name)
 	if err != nil {
-		reason := fmt.Sprintf("Bucket %v doesn't exists", name)
-		return nil, exceptions.NewErroWithReason(exceptions.BucketNotFound, reason)
+		return nil, exceptions.NewError(exceptions.BucketNotFound, name)
 	}
 
 	return bucket, nil

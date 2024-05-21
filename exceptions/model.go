@@ -1,6 +1,7 @@
 package exceptions
 
 import (
+	"fmt"
 	"net/http"
 )
 
@@ -17,64 +18,67 @@ const (
 	UnexpectedError
 )
 
-func (t ErrorType) String() string {
-	switch t {
-	case BucketAlreadyExits:
-		return "Bucket already exists"
-	case BucketNotFound:
-		return "Bucket not found"
-	case BadRequestPaylod:
-		return "Bad request: Invalid body"
-	}
-
-	return "Unexpected error"
+type errorTypeDef struct {
+	statusCode  int
+	description string
 }
 
-func (t ErrorType) StatusCode() int {
-	switch t {
-	case BucketAlreadyExits:
-		return http.StatusConflict
-	case BucketNotFound:
-		return http.StatusNotFound
-	case BadRequestPaylod:
-		return http.StatusBadRequest
-	}
+var errorTypeDefMap = map[ErrorType]errorTypeDef{
+	BucketAlreadyExits: {
+		statusCode:  http.StatusConflict,
+		description: "Bucket %v already exists",
+	},
+	BucketNotFound: {
+		statusCode:  http.StatusNotFound,
+		description: "Bucket %v not found",
+	},
+	BadRequestPaylod: {
+		statusCode:  http.StatusBadRequest,
+		description: "Bad request: Invalid body",
+	},
+	UnexpectedError: {
+		statusCode:  http.StatusInternalServerError,
+		description: "Unexpected error",
+	},
+}
 
-	return http.StatusInternalServerError
+type AppError struct {
+	ErrorType   ErrorType
+	Description string
+	Reason      error
+}
+
+func NewError(errorType ErrorType, args ...any) error {
+	errorDesc := fmt.Sprintf(errorTypeDefMap[errorType].description, args...)
+	err := AppError{
+		ErrorType:   errorType,
+		Description: errorDesc,
+	}
+	return &err
+}
+
+func NewErroWithReason(errorType ErrorType, reason error, args ...any) error {
+	errorDesc := fmt.Sprintf(errorTypeDefMap[errorType].description, args...)
+	err := AppError{
+		ErrorType:   errorType,
+		Reason:      reason,
+		Description: errorDesc,
+	}
+	return &err
+}
+
+func (e *AppError) String() string {
+	return e.Description
+}
+
+func (e *AppError) Error() string {
+	return fmt.Sprintf("%v:%v", e.ErrorType, e.Description)
 }
 
 func (t ErrorType) ErrorCode() int {
 	return int(t)
 }
 
-type AppError struct {
-	ErrorType ErrorType
-	Reason    *string
-}
-
-func NewError(errorType ErrorType) error {
-	err := AppError{
-		ErrorType: errorType,
-	}
-	return &err
-}
-
-func NewErroWithReason(errorType ErrorType, reason string) error {
-	err := AppError{
-		ErrorType: errorType,
-		Reason:    &reason,
-	}
-	return &err
-}
-
-func (e *AppError) String() string {
-	if e.Reason != nil {
-		return *e.Reason
-	}
-
-	return e.ErrorType.String()
-}
-
-func (e *AppError) Error() string {
-	return e.String()
+func (t ErrorType) StatusCode() int {
+	return errorTypeDefMap[t].statusCode
 }
