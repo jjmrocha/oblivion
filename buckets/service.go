@@ -5,18 +5,18 @@ import (
 )
 
 type BucketService struct {
-	Repository Repository
+	repository Repository
 }
 
 func NewBucketService(repo Repository) *BucketService {
 	service := BucketService{
-		Repository: repo,
+		repository: repo,
 	}
 	return &service
 }
 
 func (s *BucketService) BucketList() ([]string, error) {
-	bucketList, err := s.Repository.GetAllBuckets()
+	bucketList, err := s.repository.GetAllBuckets()
 	if err != nil {
 		return nil, exceptions.NewErroWithReason(exceptions.UnexpectedError, err)
 	}
@@ -31,19 +31,28 @@ func (s *BucketService) BucketList() ([]string, error) {
 }
 
 func (s *BucketService) CreateBucket(name string) (*Bucket, error) {
-	_, err := s.Repository.GetBucket(name)
+	_, err := s.repository.GetBucket(name)
 	if err == nil {
 		return nil, exceptions.NewError(exceptions.BucketAlreadyExits, name)
 	}
 
-	return s.Repository.CreateBucket(name)
+	return s.repository.CreateBucket(name)
 }
 
 func (s *BucketService) GetBucket(name string) (*Bucket, error) {
-	bucket, err := s.Repository.GetBucket(name)
+	bucket, err := s.repository.GetBucket(name)
 	if err != nil {
 		return nil, exceptions.NewError(exceptions.BucketNotFound, name)
 	}
 
 	return bucket, nil
+}
+
+func (s *BucketService) DeleteBucket(name string) error {
+	_, err := s.repository.GetBucket(name)
+	if err != nil {
+		return exceptions.NewError(exceptions.BucketNotFound, name)
+	}
+
+	return s.repository.DropBucket(name)
 }

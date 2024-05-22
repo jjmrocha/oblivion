@@ -57,7 +57,7 @@ func (api *Api) GetAllBuckets(w http.ResponseWriter, req *http.Request) {
 func (api *Api) GetBucket(w http.ResponseWriter, req *http.Request) {
 	bucketName := req.PathValue("bucket")
 
-	bucket, err := api.bucketService.Repository.GetBucket(bucketName)
+	bucket, err := api.bucketService.GetBucket(bucketName)
 	if err != nil {
 		writeJSONErrorResponse(w, err)
 		return
@@ -71,7 +71,15 @@ func (api *Api) GetBucket(w http.ResponseWriter, req *http.Request) {
 }
 
 func (api *Api) DeleteBucket(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprintf(w, "Welcome to the home page!")
+	bucketName := req.PathValue("bucket")
+
+	err := api.bucketService.DeleteBucket(bucketName)
+	if err != nil {
+		writeJSONErrorResponse(w, err)
+		return
+	}
+
+	writeJSONResponse(w, http.StatusNoContent, nil)
 }
 
 func (api *Api) UpdateKey(w http.ResponseWriter, req *http.Request) {
@@ -106,11 +114,14 @@ func writeJSONErrorResponse(w http.ResponseWriter, err error) {
 }
 
 func writeJSONResponse(w http.ResponseWriter, status int, payload any) {
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 
-	err := json.NewEncoder(w).Encode(payload)
-	if err != nil {
-		log.Printf("Error writing payload %v to response\n", payload)
+	if payload != nil {
+		w.Header().Set("Content-Type", "application/json")
+
+		err := json.NewEncoder(w).Encode(payload)
+		if err != nil {
+			log.Printf("Error writing payload %v to response\n", payload)
+		}
 	}
 }

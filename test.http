@@ -25,3 +25,6 @@ GET {{BaseURL}}/v1/buckets/{{BucketName}}
 
 ####
 
+DELETE {{BaseURL}}/v1/buckets/{{BucketName}}
+
+####

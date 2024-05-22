@@ -57,3 +57,13 @@ func (r *InMemoryRepo) GetBucket(name string) (*Bucket, error) {
 
 	return &bucket, nil
 }
+
+func (r *InMemoryRepo) DropBucket(name string) error {
+	if _, found := r.storage[name]; !found {
+		return exceptions.NewError(exceptions.BucketNotFound, name)
+	}
+
+	delete(r.storage, name)
+
+	return nil
+}
