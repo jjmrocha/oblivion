@@ -1,4 +1,4 @@
-package buckets
+package model
 
 type Bucket struct {
 	Name string `json:"name"`

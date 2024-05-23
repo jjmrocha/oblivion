@@ -1,7 +1,6 @@
-package exceptions
+package exception
 
 import (
-	"fmt"
 	"net/http"
 )
 
@@ -40,34 +39,6 @@ var errorTypeDefMap = map[ErrorType]errorTypeDef{
 		statusCode:  http.StatusInternalServerError,
 		description: "Unexpected error",
 	},
-}
-
-type AppError struct {
-	ErrorType   ErrorType
-	Description string
-	Reason      error
-}
-
-func NewError(errorType ErrorType, args ...any) error {
-	return NewErroWithReason(errorType, nil, args...)
-}
-
-func NewErroWithReason(errorType ErrorType, reason error, args ...any) error {
-	errorDesc := fmt.Sprintf(errorTypeDefMap[errorType].description, args...)
-	err := AppError{
-		ErrorType:   errorType,
-		Reason:      reason,
-		Description: errorDesc,
-	}
-	return &err
-}
-
-func (e *AppError) String() string {
-	return e.Description
-}
-
-func (e *AppError) Error() string {
-	return fmt.Sprintf("%v: %v", e.ErrorType, e.Description)
 }
 
 func (t ErrorType) ErrorCode() int {

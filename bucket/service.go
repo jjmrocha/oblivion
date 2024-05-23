@@ -1,14 +1,16 @@
-package buckets
+package bucket
 
 import (
-	"github.com/jjmrocha/oblivion/exceptions"
+	"github.com/jjmrocha/oblivion/bucket/model"
+	"github.com/jjmrocha/oblivion/bucket/model/exception"
+	"github.com/jjmrocha/oblivion/storage"
 )
 
 type BucketService struct {
-	repository Repository
+	repository storage.Repository
 }
 
-func NewBucketService(repo Repository) *BucketService {
+func NewBucketService(repo storage.Repository) *BucketService {
 	service := BucketService{
 		repository: repo,
 	}
@@ -18,7 +20,7 @@ func NewBucketService(repo Repository) *BucketService {
 func (s *BucketService) BucketList() ([]string, error) {
 	bucketList, err := s.repository.GetAllBuckets()
 	if err != nil {
-		return nil, exceptions.NewErroWithReason(exceptions.UnexpectedError, err)
+		return nil, exception.NewErroWithReason(exception.UnexpectedError, err)
 	}
 
 	bucketNames := make([]string, 0, len(bucketList))
@@ -30,19 +32,19 @@ func (s *BucketService) BucketList() ([]string, error) {
 	return bucketNames, nil
 }
 
-func (s *BucketService) CreateBucket(name string) (*Bucket, error) {
+func (s *BucketService) CreateBucket(name string) (*model.Bucket, error) {
 	_, err := s.repository.GetBucket(name)
 	if err == nil {
-		return nil, exceptions.NewError(exceptions.BucketAlreadyExits, name)
+		return nil, exception.NewError(exception.BucketAlreadyExits, name)
 	}
 
 	return s.repository.CreateBucket(name)
 }
 
-func (s *BucketService) GetBucket(name string) (*Bucket, error) {
+func (s *BucketService) GetBucket(name string) (*model.Bucket, error) {
 	bucket, err := s.repository.GetBucket(name)
 	if err != nil {
-		return nil, exceptions.NewError(exceptions.BucketNotFound, name)
+		return nil, exception.NewError(exception.BucketNotFound, name)
 	}
 
 	return bucket, nil
@@ -51,7 +53,7 @@ func (s *BucketService) GetBucket(name string) (*Bucket, error) {
 func (s *BucketService) DeleteBucket(name string) error {
 	_, err := s.repository.GetBucket(name)
 	if err != nil {
-		return exceptions.NewError(exceptions.BucketNotFound, name)
+		return exception.NewError(exception.BucketNotFound, name)
 	}
 
 	return s.repository.DropBucket(name)

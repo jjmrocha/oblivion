@@ -6,15 +6,15 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/jjmrocha/oblivion/buckets"
-	"github.com/jjmrocha/oblivion/exceptions"
+	"github.com/jjmrocha/oblivion/bucket"
+	"github.com/jjmrocha/oblivion/bucket/model/exception"
 )
 
 type Api struct {
-	bucketService *buckets.BucketService
+	bucketService *bucket.BucketService
 }
 
-func NewApi(bucketService *buckets.BucketService) *Api {
+func NewApi(bucketService *bucket.BucketService) *Api {
 	api := Api{
 		bucketService: bucketService,
 	}
@@ -27,7 +27,7 @@ func (api *Api) CreateBucket(w http.ResponseWriter, req *http.Request) {
 
 	err := json.NewDecoder(req.Body).Decode(&request)
 	if err != nil {
-		writeJSONErrorResponse(w, exceptions.NewError(exceptions.BadRequestPaylod))
+		writeJSONErrorResponse(w, exception.NewError(exception.BadRequestPaylod))
 		return
 	}
 
@@ -95,10 +95,10 @@ func (api *Api) DeleteKey(w http.ResponseWriter, req *http.Request) {
 }
 
 func writeJSONErrorResponse(w http.ResponseWriter, err error) {
-	errorType := exceptions.UnexpectedError
+	errorType := exception.UnexpectedError
 	reason := err.Error()
 
-	if appErr, ok := err.(*exceptions.AppError); ok {
+	if appErr, ok := err.(*exception.AppError); ok {
 		errorType = appErr.ErrorType
 		reason = appErr.String()
 	}

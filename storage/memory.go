@@ -1,7 +1,8 @@
-package buckets
+package storage
 
 import (
-	"github.com/jjmrocha/oblivion/exceptions"
+	"github.com/jjmrocha/oblivion/bucket/model"
+	"github.com/jjmrocha/oblivion/bucket/model/exception"
 )
 
 type inMemoryBucket map[string]any
@@ -18,11 +19,11 @@ func NewInMemoryRepo() *InMemoryRepo {
 	return &repo
 }
 
-func (r *InMemoryRepo) GetAllBuckets() ([]*Bucket, error) {
-	bucketList := make([]*Bucket, 0)
+func (r *InMemoryRepo) GetAllBuckets() ([]*model.Bucket, error) {
+	bucketList := make([]*model.Bucket, 0)
 
 	for bucketName := range r.storage {
-		bucket := Bucket{
+		bucket := model.Bucket{
 			Name: bucketName,
 		}
 
@@ -32,26 +33,26 @@ func (r *InMemoryRepo) GetAllBuckets() ([]*Bucket, error) {
 	return bucketList, nil
 }
 
-func (r *InMemoryRepo) CreateBucket(name string) (*Bucket, error) {
+func (r *InMemoryRepo) CreateBucket(name string) (*model.Bucket, error) {
 	if _, found := r.storage[name]; found {
-		return nil, exceptions.NewError(exceptions.BucketNotFound, name)
+		return nil, exception.NewError(exception.BucketNotFound, name)
 	}
 
 	r.storage[name] = make(inMemoryBucket)
 
-	bucket := Bucket{
+	bucket := model.Bucket{
 		Name: name,
 	}
 
 	return &bucket, nil
 }
 
-func (r *InMemoryRepo) GetBucket(name string) (*Bucket, error) {
+func (r *InMemoryRepo) GetBucket(name string) (*model.Bucket, error) {
 	if _, found := r.storage[name]; !found {
-		return nil, exceptions.NewError(exceptions.BucketNotFound, name)
+		return nil, exception.NewError(exception.BucketNotFound, name)
 	}
 
-	bucket := Bucket{
+	bucket := model.Bucket{
 		Name: name,
 	}
 
@@ -60,7 +61,7 @@ func (r *InMemoryRepo) GetBucket(name string) (*Bucket, error) {
 
 func (r *InMemoryRepo) DropBucket(name string) error {
 	if _, found := r.storage[name]; !found {
-		return exceptions.NewError(exceptions.BucketNotFound, name)
+		return exception.NewError(exception.BucketNotFound, name)
 	}
 
 	delete(r.storage, name)

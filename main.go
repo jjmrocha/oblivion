@@ -5,7 +5,8 @@ import (
 	"net/http"
 
 	"github.com/jjmrocha/oblivion/api"
-	"github.com/jjmrocha/oblivion/buckets"
+	"github.com/jjmrocha/oblivion/bucket"
+	"github.com/jjmrocha/oblivion/storage"
 )
 
 func routes(api *api.Api) *http.ServeMux {
@@ -19,12 +20,13 @@ func routes(api *api.Api) *http.ServeMux {
 	mux.HandleFunc("GET /v1/buckets/{bucket}/keys/{key}", api.ReadKey)
 	mux.HandleFunc("PUT /v1/buckets/{bucket}/keys/{key}", api.UpdateKey)
 	mux.HandleFunc("DElETE /v1/buckets/{bucket}/keys/{key}", api.DeleteKey)
+	mux.HandleFunc("GET /v1/buckets/{bucket}/keys", api.ReadKey)
 	return mux
 }
 
 func main() {
-	repository := buckets.NewInMemoryRepo()
-	buckectService := buckets.NewBucketService(repository)
+	repository := storage.NewInMemoryRepo()
+	buckectService := bucket.NewBucketService(repository)
 	api := api.NewApi(buckectService)
 	mux := routes(api)
 	log.Fatal(http.ListenAndServe(":9090", mux))
