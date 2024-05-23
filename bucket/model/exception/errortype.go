@@ -11,6 +11,7 @@ const (
 	BucketAlreadyExits ErrorType = iota + 1
 	BucketNotFound
 	// Keys related
+	KeyNotFound
 	// Request related
 	BadRequestPaylod
 	// Gneric
@@ -30,6 +31,10 @@ var errorTypeDefMap = map[ErrorType]errorTypeDef{
 	BucketNotFound: {
 		statusCode:  http.StatusNotFound,
 		description: "Bucket %v not found",
+	},
+	KeyNotFound: {
+		statusCode:  http.StatusNotFound,
+		description: "Key %v not found on bucket %v",
 	},
 	BadRequestPaylod: {
 		statusCode:  http.StatusBadRequest,

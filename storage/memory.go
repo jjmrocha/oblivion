@@ -35,7 +35,7 @@ func (r *InMemoryRepo) GetAllBuckets() ([]*model.Bucket, error) {
 
 func (r *InMemoryRepo) CreateBucket(name string) (*model.Bucket, error) {
 	if _, found := r.storage[name]; found {
-		return nil, exception.NewError(exception.BucketNotFound, name)
+		return nil, exception.NewError(exception.BucketAlreadyExits, name)
 	}
 
 	r.storage[name] = make(inMemoryBucket)
@@ -49,7 +49,7 @@ func (r *InMemoryRepo) CreateBucket(name string) (*model.Bucket, error) {
 
 func (r *InMemoryRepo) GetBucket(name string) (*model.Bucket, error) {
 	if _, found := r.storage[name]; !found {
-		return nil, exception.NewError(exception.BucketNotFound, name)
+		return nil, nil
 	}
 
 	bucket := model.Bucket{
@@ -61,10 +61,24 @@ func (r *InMemoryRepo) GetBucket(name string) (*model.Bucket, error) {
 
 func (r *InMemoryRepo) DropBucket(name string) error {
 	if _, found := r.storage[name]; !found {
-		return exception.NewError(exception.BucketNotFound, name)
+		return nil
 	}
 
 	delete(r.storage, name)
 
 	return nil
+}
+
+func (r *InMemoryRepo) Read(bucket *model.Bucket, key string) (any, error) {
+	store, found := r.storage[bucket.Name]
+	if !found {
+		return nil, exception.NewError(exception.BucketNotFound, bucket.Name)
+	}
+
+	value, found := store[key]
+	if !found {
+		return nil, exception.NewError(exception.KeyNotFound, key, bucket.Name)
+	}
+
+	return value, nil
 }

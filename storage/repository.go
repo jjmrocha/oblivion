@@ -8,6 +8,6 @@ type Repository interface {
 	GetBucket(string) (*model.Bucket, error)
 	DropBucket(string) error
 	//Store(*Bucket, string, any) error
-	//Read(*Bucket, string) (any, error)
+	Read(*model.Bucket, string) (any, error)
 	//Delete(*Bucket, string) error
 }

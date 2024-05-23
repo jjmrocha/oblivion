@@ -20,7 +20,7 @@ func routes(api *api.Api) *http.ServeMux {
 	mux.HandleFunc("GET /v1/buckets/{bucket}/keys/{key}", api.ReadKey)
 	mux.HandleFunc("PUT /v1/buckets/{bucket}/keys/{key}", api.UpdateKey)
 	mux.HandleFunc("DElETE /v1/buckets/{bucket}/keys/{key}", api.DeleteKey)
-	mux.HandleFunc("GET /v1/buckets/{bucket}/keys", api.ReadKey)
+	mux.HandleFunc("GET /v1/buckets/{bucket}/keys", api.Search)
 	return mux
 }
 

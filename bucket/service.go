@@ -33,8 +33,12 @@ func (s *BucketService) BucketList() ([]string, error) {
 }
 
 func (s *BucketService) CreateBucket(name string) (*model.Bucket, error) {
-	_, err := s.repository.GetBucket(name)
-	if err == nil {
+	bucket, err := s.repository.GetBucket(name)
+	if err != nil {
+		return nil, exception.NewErroWithReason(exception.UnexpectedError, err)
+	}
+
+	if bucket != nil {
 		return nil, exception.NewError(exception.BucketAlreadyExits, name)
 	}
 
@@ -43,7 +47,12 @@ func (s *BucketService) CreateBucket(name string) (*model.Bucket, error) {
 
 func (s *BucketService) GetBucket(name string) (*model.Bucket, error) {
 	bucket, err := s.repository.GetBucket(name)
+
 	if err != nil {
+		return nil, exception.NewErroWithReason(exception.UnexpectedError, err)
+	}
+
+	if bucket == nil {
 		return nil, exception.NewError(exception.BucketNotFound, name)
 	}
 
@@ -51,10 +60,29 @@ func (s *BucketService) GetBucket(name string) (*model.Bucket, error) {
 }
 
 func (s *BucketService) DeleteBucket(name string) error {
-	_, err := s.repository.GetBucket(name)
+	bucket, err := s.repository.GetBucket(name)
+
 	if err != nil {
+		return exception.NewErroWithReason(exception.UnexpectedError, err)
+	}
+
+	if bucket == nil {
 		return exception.NewError(exception.BucketNotFound, name)
 	}
 
 	return s.repository.DropBucket(name)
+}
+
+func (s *BucketService) GetValue(name string, key string) (any, error) {
+	bucket, err := s.repository.GetBucket(name)
+
+	if err != nil {
+		return nil, exception.NewErroWithReason(exception.UnexpectedError, err)
+	}
+
+	if bucket == nil {
+		return nil, exception.NewError(exception.BucketNotFound, name)
+	}
+
+	return s.repository.Read(bucket, key)
 }

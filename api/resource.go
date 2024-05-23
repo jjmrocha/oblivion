@@ -87,10 +87,23 @@ func (api *Api) UpdateKey(w http.ResponseWriter, req *http.Request) {
 }
 
 func (api *Api) ReadKey(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprintf(w, "Welcome to the home page!")
+	bucketName := req.PathValue("bucket")
+	key := req.PathValue("key")
+
+	value, err := api.bucketService.GetValue(bucketName, key)
+	if err != nil {
+		writeJSONErrorResponse(w, err)
+		return
+	}
+
+	writeJSONResponse(w, http.StatusOK, value)
 }
 
 func (api *Api) DeleteKey(w http.ResponseWriter, req *http.Request) {
+	fmt.Fprintf(w, "Welcome to the home page!")
+}
+
+func (api *Api) Search(w http.ResponseWriter, req *http.Request) {
 	fmt.Fprintf(w, "Welcome to the home page!")
 }
 
