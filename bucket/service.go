@@ -32,7 +32,7 @@ func (s *BucketService) BucketList() ([]string, error) {
 	return bucketNames, nil
 }
 
-func (s *BucketService) CreateBucket(name string) (*model.Bucket, error) {
+func (s *BucketService) CreateBucket(name string, schema []model.Field) (*model.Bucket, error) {
 	bucket, err := s.repository.GetBucket(name)
 	if err != nil {
 		return nil, apperror.WithReason(model.UnexpectedError, err)
@@ -42,7 +42,7 @@ func (s *BucketService) CreateBucket(name string) (*model.Bucket, error) {
 		return nil, apperror.New(model.BucketAlreadyExits, name)
 	}
 
-	return s.repository.CreateBucket(name)
+	return s.repository.CreateBucket(name, schema)
 }
 
 func (s *BucketService) GetBucket(name string) (*model.Bucket, error) {

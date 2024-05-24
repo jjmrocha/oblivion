@@ -4,7 +4,7 @@ import "github.com/jjmrocha/oblivion/bucket/model"
 
 type Repository interface {
 	GetAllBuckets() ([]*model.Bucket, error)
-	CreateBucket(string) (*model.Bucket, error)
+	CreateBucket(string, []model.Field) (*model.Bucket, error)
 	GetBucket(string) (*model.Bucket, error)
 	DropBucket(string) error
 	Store(*model.Bucket, string, any) error

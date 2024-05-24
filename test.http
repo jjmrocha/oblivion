@@ -12,7 +12,28 @@ POST {{BaseURL}}/v1/buckets
 Content-Type: application/json
 
 {
-  "name": "{{BucketName}}"
+  "name": "{{BucketName}}",
+  "schema": [
+    {
+      "field": "string",
+      "type": "String",
+      "not-null": true
+    },
+    {
+      "field": "int",
+      "type": "Int"
+    },
+    {
+      "field": "float",
+      "type": "Float",
+      "not-null": true
+    },
+    {
+      "field": "bool",
+      "type": "Bool",
+      "not-null": false
+    }
+  ]
 }
 
 #####
@@ -25,7 +46,7 @@ DELETE {{BaseURL}}/v1/buckets/{{BucketName}}
 
 ####
 
-@Key = key2
+@Key = key
 
 GET {{BaseURL}}/v1/buckets/{{BucketName}}/keys/{{Key}}
 
@@ -37,7 +58,7 @@ Content-Type: application/json
 {
   "string": "some text",
   "int": 123,
-  "float": 123.45,
+  "float": 123.456,
   "bool": false
 }
 

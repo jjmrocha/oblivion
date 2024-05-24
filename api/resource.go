@@ -35,7 +35,7 @@ func (api *Api) SetRoutes(mux *http.ServeMux) {
 	})
 
 	mux.HandleFunc("POST /v1/buckets", func(w http.ResponseWriter, req *http.Request) {
-		var request CreateBucketRequest
+		var request model.Bucket
 
 		err := json.NewDecoder(req.Body).Decode(&request)
 		if err != nil {
@@ -43,17 +43,13 @@ func (api *Api) SetRoutes(mux *http.ServeMux) {
 			return
 		}
 
-		bucket, err := api.bucketService.CreateBucket(request.Name)
+		bucket, err := api.bucketService.CreateBucket(request.Name, request.Schema)
 		if err != nil {
 			writeJSONErrorResponse(w, err)
 			return
 		}
 
-		response := BucketResponse{
-			Name: bucket.Name,
-		}
-
-		writeJSONResponse(w, http.StatusCreated, &response)
+		writeJSONResponse(w, http.StatusCreated, &bucket)
 	})
 
 	mux.HandleFunc("GET /v1/buckets/{bucket}", func(w http.ResponseWriter, req *http.Request) {
@@ -65,11 +61,7 @@ func (api *Api) SetRoutes(mux *http.ServeMux) {
 			return
 		}
 
-		paylod := BucketResponse{
-			Name: bucket.Name,
-		}
-
-		writeJSONResponse(w, http.StatusOK, &paylod)
+		writeJSONResponse(w, http.StatusOK, &bucket)
 	})
 
 	mux.HandleFunc("DELETE /v1/buckets/{bucket}", func(w http.ResponseWriter, req *http.Request) {

@@ -5,15 +5,18 @@ import (
 	"github.com/jjmrocha/oblivion/bucket/model/apperror"
 )
 
-type inMemoryBucket map[string]any
+type bucketDef struct {
+	schema []model.Field
+	keys   map[string]any
+}
 
 type InMemoryRepo struct {
-	storage map[string]inMemoryBucket
+	storage map[string]bucketDef
 }
 
 func NewInMemoryRepo() *InMemoryRepo {
 	repo := InMemoryRepo{
-		storage: make(map[string]inMemoryBucket),
+		storage: make(map[string]bucketDef),
 	}
 
 	return &repo
@@ -22,9 +25,10 @@ func NewInMemoryRepo() *InMemoryRepo {
 func (r *InMemoryRepo) GetAllBuckets() ([]*model.Bucket, error) {
 	bucketList := make([]*model.Bucket, 0)
 
-	for bucketName := range r.storage {
+	for name, bucketDef := range r.storage {
 		bucket := model.Bucket{
-			Name: bucketName,
+			Name:   name,
+			Schema: bucketDef.schema,
 		}
 
 		bucketList = append(bucketList, &bucket)
@@ -33,27 +37,35 @@ func (r *InMemoryRepo) GetAllBuckets() ([]*model.Bucket, error) {
 	return bucketList, nil
 }
 
-func (r *InMemoryRepo) CreateBucket(name string) (*model.Bucket, error) {
+func (r *InMemoryRepo) CreateBucket(name string, schema []model.Field) (*model.Bucket, error) {
 	if _, found := r.storage[name]; found {
 		return nil, apperror.New(model.BucketAlreadyExits, name)
 	}
 
-	r.storage[name] = make(inMemoryBucket)
+	bucketDef := bucketDef{
+		keys:   make(map[string]any),
+		schema: schema,
+	}
+
+	r.storage[name] = bucketDef
 
 	bucket := model.Bucket{
-		Name: name,
+		Name:   name,
+		Schema: schema,
 	}
 
 	return &bucket, nil
 }
 
 func (r *InMemoryRepo) GetBucket(name string) (*model.Bucket, error) {
-	if _, found := r.storage[name]; !found {
+	bucketDef, found := r.storage[name]
+	if !found {
 		return nil, nil
 	}
 
 	bucket := model.Bucket{
-		Name: name,
+		Name:   name,
+		Schema: bucketDef.schema,
 	}
 
 	return &bucket, nil
@@ -70,12 +82,12 @@ func (r *InMemoryRepo) DropBucket(name string) error {
 }
 
 func (r *InMemoryRepo) Read(bucket *model.Bucket, key string) (any, error) {
-	store, found := r.storage[bucket.Name]
+	bucketDef, found := r.storage[bucket.Name]
 	if !found {
 		return nil, apperror.New(model.BucketNotFound, bucket.Name)
 	}
 
-	value, found := store[key]
+	value, found := bucketDef.keys[key]
 	if !found {
 		return nil, apperror.New(model.KeyNotFound, key, bucket.Name)
 	}
@@ -84,23 +96,23 @@ func (r *InMemoryRepo) Read(bucket *model.Bucket, key string) (any, error) {
 }
 
 func (r *InMemoryRepo) Store(bucket *model.Bucket, key string, value any) error {
-	store, found := r.storage[bucket.Name]
+	bucketDef, found := r.storage[bucket.Name]
 	if !found {
 		return apperror.New(model.BucketNotFound, bucket.Name)
 	}
 
-	store[key] = value
+	bucketDef.keys[key] = value
 
 	return nil
 }
 
 func (r *InMemoryRepo) Delete(bucket *model.Bucket, key string) error {
-	store, found := r.storage[bucket.Name]
+	bucketDef, found := r.storage[bucket.Name]
 	if !found {
 		return apperror.New(model.BucketNotFound, bucket.Name)
 	}
 
-	delete(store, key)
+	delete(bucketDef.keys, key)
 
 	return nil
 }
