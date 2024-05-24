@@ -22,115 +22,118 @@ func NewApi(bucketService *bucket.BucketService) *Api {
 	return &api
 }
 
-func (api *Api) CreateBucket(w http.ResponseWriter, req *http.Request) {
-	var request CreateBucketRequest
+func (api *Api) SetRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("GET /v1/buckets", func(w http.ResponseWriter, req *http.Request) {
+		bucketNames, err := api.bucketService.BucketList()
+		if err != nil {
+			writeJSONErrorResponse(w, err)
+			return
+		}
 
-	err := json.NewDecoder(req.Body).Decode(&request)
-	if err != nil {
-		writeJSONErrorResponse(w, exception.NewError(exception.BadRequestPaylod))
-		return
-	}
+		writeJSONResponse(w, http.StatusCreated, bucketNames)
+	})
 
-	bucket, err := api.bucketService.CreateBucket(request.Name)
-	if err != nil {
-		writeJSONErrorResponse(w, err)
-		return
-	}
+	mux.HandleFunc("POST /v1/buckets", func(w http.ResponseWriter, req *http.Request) {
+		var request CreateBucketRequest
 
-	response := BucketResponse{
-		Name: bucket.Name,
-	}
+		err := json.NewDecoder(req.Body).Decode(&request)
+		if err != nil {
+			writeJSONErrorResponse(w, exception.NewError(exception.BadRequestPaylod))
+			return
+		}
 
-	writeJSONResponse(w, http.StatusCreated, &response)
-}
+		bucket, err := api.bucketService.CreateBucket(request.Name)
+		if err != nil {
+			writeJSONErrorResponse(w, err)
+			return
+		}
 
-func (api *Api) GetAllBuckets(w http.ResponseWriter, req *http.Request) {
-	bucketNames, err := api.bucketService.BucketList()
-	if err != nil {
-		writeJSONErrorResponse(w, err)
-		return
-	}
+		response := BucketResponse{
+			Name: bucket.Name,
+		}
 
-	writeJSONResponse(w, http.StatusCreated, bucketNames)
-}
+		writeJSONResponse(w, http.StatusCreated, &response)
+	})
 
-func (api *Api) GetBucket(w http.ResponseWriter, req *http.Request) {
-	bucketName := req.PathValue("bucket")
+	mux.HandleFunc("GET /v1/buckets/{bucket}", func(w http.ResponseWriter, req *http.Request) {
+		bucketName := req.PathValue("bucket")
 
-	bucket, err := api.bucketService.GetBucket(bucketName)
-	if err != nil {
-		writeJSONErrorResponse(w, err)
-		return
-	}
+		bucket, err := api.bucketService.GetBucket(bucketName)
+		if err != nil {
+			writeJSONErrorResponse(w, err)
+			return
+		}
 
-	paylod := BucketResponse{
-		Name: bucket.Name,
-	}
+		paylod := BucketResponse{
+			Name: bucket.Name,
+		}
 
-	writeJSONResponse(w, http.StatusOK, &paylod)
-}
+		writeJSONResponse(w, http.StatusOK, &paylod)
+	})
 
-func (api *Api) DeleteBucket(w http.ResponseWriter, req *http.Request) {
-	bucketName := req.PathValue("bucket")
+	mux.HandleFunc("DELETE /v1/buckets/{bucket}", func(w http.ResponseWriter, req *http.Request) {
+		bucketName := req.PathValue("bucket")
 
-	err := api.bucketService.DeleteBucket(bucketName)
-	if err != nil {
-		writeJSONErrorResponse(w, err)
-		return
-	}
+		err := api.bucketService.DeleteBucket(bucketName)
+		if err != nil {
+			writeJSONErrorResponse(w, err)
+			return
+		}
 
-	writeJSONResponse(w, http.StatusNoContent, nil)
-}
+		writeJSONResponse(w, http.StatusNoContent, nil)
+	})
 
-func (api *Api) UpdateKey(w http.ResponseWriter, req *http.Request) {
-	bucketName := req.PathValue("bucket")
-	key := req.PathValue("key")
+	// key operations
+	mux.HandleFunc("GET /v1/buckets/{bucket}/keys/{key}", func(w http.ResponseWriter, req *http.Request) {
+		bucketName := req.PathValue("bucket")
+		key := req.PathValue("key")
 
-	var value map[string]any
+		value, err := api.bucketService.GetValue(bucketName, key)
+		if err != nil {
+			writeJSONErrorResponse(w, err)
+			return
+		}
 
-	err := json.NewDecoder(req.Body).Decode(&value)
-	if err != nil {
-		writeJSONErrorResponse(w, exception.NewError(exception.BadRequestPaylod))
-		return
-	}
+		writeJSONResponse(w, http.StatusOK, value)
+	})
 
-	err = api.bucketService.PutValue(bucketName, key, value)
-	if err != nil {
-		writeJSONErrorResponse(w, err)
-		return
-	}
+	mux.HandleFunc("PUT /v1/buckets/{bucket}/keys/{key}", func(w http.ResponseWriter, req *http.Request) {
+		bucketName := req.PathValue("bucket")
+		key := req.PathValue("key")
 
-	writeJSONResponse(w, http.StatusNoContent, nil)
-}
+		var value map[string]any
 
-func (api *Api) ReadKey(w http.ResponseWriter, req *http.Request) {
-	bucketName := req.PathValue("bucket")
-	key := req.PathValue("key")
+		err := json.NewDecoder(req.Body).Decode(&value)
+		if err != nil {
+			writeJSONErrorResponse(w, exception.NewError(exception.BadRequestPaylod))
+			return
+		}
 
-	value, err := api.bucketService.GetValue(bucketName, key)
-	if err != nil {
-		writeJSONErrorResponse(w, err)
-		return
-	}
+		err = api.bucketService.PutValue(bucketName, key, value)
+		if err != nil {
+			writeJSONErrorResponse(w, err)
+			return
+		}
 
-	writeJSONResponse(w, http.StatusOK, value)
-}
+		writeJSONResponse(w, http.StatusNoContent, nil)
+	})
 
-func (api *Api) DeleteKey(w http.ResponseWriter, req *http.Request) {
-	bucketName := req.PathValue("bucket")
-	key := req.PathValue("key")
+	mux.HandleFunc("DELETE /v1/buckets/{bucket}/keys/{key}", func(w http.ResponseWriter, req *http.Request) {
+		bucketName := req.PathValue("bucket")
+		key := req.PathValue("key")
 
-	err := api.bucketService.DeleteValue(bucketName, key)
-	if err != nil {
-		writeJSONErrorResponse(w, err)
-		return
-	}
+		err := api.bucketService.DeleteValue(bucketName, key)
+		if err != nil {
+			writeJSONErrorResponse(w, err)
+			return
+		}
 
-	writeJSONResponse(w, http.StatusNoContent, nil)
-}
+		writeJSONResponse(w, http.StatusNoContent, nil)
+	})
 
-func (api *Api) Search(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprintf(w, "Welcome to the home page!")
+	mux.HandleFunc("GET /v1/buckets/{bucket}/keys", func(w http.ResponseWriter, req *http.Request) {
+		fmt.Fprintf(w, "Welcome to the home page!")
+	})
 }
 
 func writeJSONErrorResponse(w http.ResponseWriter, err error) {
