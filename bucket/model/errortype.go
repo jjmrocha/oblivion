@@ -1,4 +1,4 @@
-package exception
+package model
 
 import (
 	"net/http"
@@ -19,30 +19,30 @@ const (
 )
 
 type errorTypeDef struct {
-	statusCode  int
-	description string
+	statusCode int
+	template   string
 }
 
 var errorTypeDefMap = map[ErrorType]errorTypeDef{
 	BucketAlreadyExits: {
-		statusCode:  http.StatusConflict,
-		description: "Bucket %v already exists",
+		statusCode: http.StatusConflict,
+		template:   "Bucket %v already exists",
 	},
 	BucketNotFound: {
-		statusCode:  http.StatusNotFound,
-		description: "Bucket %v not found",
+		statusCode: http.StatusNotFound,
+		template:   "Bucket %v not found",
 	},
 	KeyNotFound: {
-		statusCode:  http.StatusNotFound,
-		description: "Key %v not found on bucket %v",
+		statusCode: http.StatusNotFound,
+		template:   "Key %v not found on bucket %v",
 	},
 	BadRequestPaylod: {
-		statusCode:  http.StatusBadRequest,
-		description: "Bad request: Invalid body",
+		statusCode: http.StatusBadRequest,
+		template:   "Bad request: Invalid body",
 	},
 	UnexpectedError: {
-		statusCode:  http.StatusInternalServerError,
-		description: "Unexpected error",
+		statusCode: http.StatusInternalServerError,
+		template:   "Unexpected error",
 	},
 }
 
@@ -52,4 +52,8 @@ func (t ErrorType) ErrorCode() int {
 
 func (t ErrorType) StatusCode() int {
 	return errorTypeDefMap[t].statusCode
+}
+
+func (t ErrorType) Template() string {
+	return errorTypeDefMap[t].template
 }

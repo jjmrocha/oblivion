@@ -2,7 +2,7 @@ package storage
 
 import (
 	"github.com/jjmrocha/oblivion/bucket/model"
-	"github.com/jjmrocha/oblivion/bucket/model/exception"
+	"github.com/jjmrocha/oblivion/bucket/model/apperror"
 )
 
 type inMemoryBucket map[string]any
@@ -35,7 +35,7 @@ func (r *InMemoryRepo) GetAllBuckets() ([]*model.Bucket, error) {
 
 func (r *InMemoryRepo) CreateBucket(name string) (*model.Bucket, error) {
 	if _, found := r.storage[name]; found {
-		return nil, exception.NewError(exception.BucketAlreadyExits, name)
+		return nil, apperror.New(model.BucketAlreadyExits, name)
 	}
 
 	r.storage[name] = make(inMemoryBucket)
@@ -72,12 +72,12 @@ func (r *InMemoryRepo) DropBucket(name string) error {
 func (r *InMemoryRepo) Read(bucket *model.Bucket, key string) (any, error) {
 	store, found := r.storage[bucket.Name]
 	if !found {
-		return nil, exception.NewError(exception.BucketNotFound, bucket.Name)
+		return nil, apperror.New(model.BucketNotFound, bucket.Name)
 	}
 
 	value, found := store[key]
 	if !found {
-		return nil, exception.NewError(exception.KeyNotFound, key, bucket.Name)
+		return nil, apperror.New(model.KeyNotFound, key, bucket.Name)
 	}
 
 	return value, nil
@@ -86,7 +86,7 @@ func (r *InMemoryRepo) Read(bucket *model.Bucket, key string) (any, error) {
 func (r *InMemoryRepo) Store(bucket *model.Bucket, key string, value any) error {
 	store, found := r.storage[bucket.Name]
 	if !found {
-		return exception.NewError(exception.BucketNotFound, bucket.Name)
+		return apperror.New(model.BucketNotFound, bucket.Name)
 	}
 
 	store[key] = value
@@ -97,7 +97,7 @@ func (r *InMemoryRepo) Store(bucket *model.Bucket, key string, value any) error 
 func (r *InMemoryRepo) Delete(bucket *model.Bucket, key string) error {
 	store, found := r.storage[bucket.Name]
 	if !found {
-		return exception.NewError(exception.BucketNotFound, bucket.Name)
+		return apperror.New(model.BucketNotFound, bucket.Name)
 	}
 
 	delete(store, key)

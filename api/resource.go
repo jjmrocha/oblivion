@@ -7,7 +7,8 @@ import (
 	"net/http"
 
 	"github.com/jjmrocha/oblivion/bucket"
-	"github.com/jjmrocha/oblivion/bucket/model/exception"
+	"github.com/jjmrocha/oblivion/bucket/model"
+	"github.com/jjmrocha/oblivion/bucket/model/apperror"
 )
 
 type Api struct {
@@ -38,7 +39,7 @@ func (api *Api) SetRoutes(mux *http.ServeMux) {
 
 		err := json.NewDecoder(req.Body).Decode(&request)
 		if err != nil {
-			writeJSONErrorResponse(w, exception.NewError(exception.BadRequestPaylod))
+			writeJSONErrorResponse(w, apperror.New(model.BadRequestPaylod))
 			return
 		}
 
@@ -105,7 +106,7 @@ func (api *Api) SetRoutes(mux *http.ServeMux) {
 
 		err := json.NewDecoder(req.Body).Decode(&value)
 		if err != nil {
-			writeJSONErrorResponse(w, exception.NewError(exception.BadRequestPaylod))
+			writeJSONErrorResponse(w, apperror.New(model.BadRequestPaylod))
 			return
 		}
 
@@ -137,10 +138,10 @@ func (api *Api) SetRoutes(mux *http.ServeMux) {
 }
 
 func writeJSONErrorResponse(w http.ResponseWriter, err error) {
-	errorType := exception.UnexpectedError
+	errorType := model.UnexpectedError
 	reason := err.Error()
 
-	if appErr, ok := err.(*exception.AppError); ok {
+	if appErr, ok := err.(*apperror.AppError); ok {
 		errorType = appErr.ErrorType
 		reason = appErr.String()
 	}
