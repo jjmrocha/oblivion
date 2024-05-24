@@ -43,6 +43,12 @@ func (api *Api) SetRoutes(mux *http.ServeMux) {
 			return
 		}
 
+		err = checkBucketCreation(request.Name, request.Schema)
+		if err != nil {
+			writeJSONErrorResponse(w, err)
+			return
+		}
+
 		bucket, err := api.bucketService.CreateBucket(request.Name, request.Schema)
 		if err != nil {
 			writeJSONErrorResponse(w, err)

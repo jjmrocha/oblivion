@@ -16,21 +16,21 @@ Content-Type: application/json
   "schema": [
     {
       "field": "string",
-      "type": "String",
+      "type": "string",
       "not-null": true
     },
     {
       "field": "int",
-      "type": "Int"
+      "type": "int"
     },
     {
       "field": "float",
-      "type": "Float",
+      "type": "float",
       "not-null": true
     },
     {
       "field": "bool",
-      "type": "Bool",
+      "type": "bool",
       "not-null": false
     }
   ]

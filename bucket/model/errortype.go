@@ -14,6 +14,9 @@ const (
 	KeyNotFound
 	// Request related
 	BadRequestPaylod
+	InvalidBucketName
+	SchemaMissing
+	InvalidSchema
 	// Gneric
 	UnexpectedError
 )
@@ -35,6 +38,18 @@ var errorTypeDefMap = map[ErrorType]errorTypeDef{
 	KeyNotFound: {
 		statusCode: http.StatusNotFound,
 		template:   "Key %v not found on bucket %v",
+	},
+	InvalidBucketName: {
+		statusCode: http.StatusBadRequest,
+		template:   "Invalid bucket name",
+	},
+	SchemaMissing: {
+		statusCode: http.StatusBadRequest,
+		template:   "Schema must contain at least one field",
+	},
+	InvalidSchema: {
+		statusCode: http.StatusBadRequest,
+		template:   "Invalid definition for field %v",
 	},
 	BadRequestPaylod: {
 		statusCode: http.StatusBadRequest,
