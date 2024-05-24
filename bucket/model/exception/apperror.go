@@ -11,10 +11,10 @@ type AppError struct {
 }
 
 func NewError(errorType ErrorType, args ...any) error {
-	return NewErroWithReason(errorType, nil, args...)
+	return NewErrorWithReason(errorType, nil, args...)
 }
 
-func NewErroWithReason(errorType ErrorType, reason error, args ...any) error {
+func NewErrorWithReason(errorType ErrorType, reason error, args ...any) error {
 	errorDesc := fmt.Sprintf(errorTypeDefMap[errorType].description, args...)
 	err := AppError{
 		ErrorType:   errorType,

@@ -20,7 +20,7 @@ func NewBucketService(repo storage.Repository) *BucketService {
 func (s *BucketService) BucketList() ([]string, error) {
 	bucketList, err := s.repository.GetAllBuckets()
 	if err != nil {
-		return nil, exception.NewErroWithReason(exception.UnexpectedError, err)
+		return nil, exception.NewErrorWithReason(exception.UnexpectedError, err)
 	}
 
 	bucketNames := make([]string, 0, len(bucketList))
@@ -35,7 +35,7 @@ func (s *BucketService) BucketList() ([]string, error) {
 func (s *BucketService) CreateBucket(name string) (*model.Bucket, error) {
 	bucket, err := s.repository.GetBucket(name)
 	if err != nil {
-		return nil, exception.NewErroWithReason(exception.UnexpectedError, err)
+		return nil, exception.NewErrorWithReason(exception.UnexpectedError, err)
 	}
 
 	if bucket != nil {
@@ -49,7 +49,7 @@ func (s *BucketService) GetBucket(name string) (*model.Bucket, error) {
 	bucket, err := s.repository.GetBucket(name)
 
 	if err != nil {
-		return nil, exception.NewErroWithReason(exception.UnexpectedError, err)
+		return nil, exception.NewErrorWithReason(exception.UnexpectedError, err)
 	}
 
 	if bucket == nil {
@@ -63,7 +63,7 @@ func (s *BucketService) DeleteBucket(name string) error {
 	bucket, err := s.repository.GetBucket(name)
 
 	if err != nil {
-		return exception.NewErroWithReason(exception.UnexpectedError, err)
+		return exception.NewErrorWithReason(exception.UnexpectedError, err)
 	}
 
 	if bucket == nil {
@@ -77,7 +77,7 @@ func (s *BucketService) GetValue(name string, key string) (any, error) {
 	bucket, err := s.repository.GetBucket(name)
 
 	if err != nil {
-		return nil, exception.NewErroWithReason(exception.UnexpectedError, err)
+		return nil, exception.NewErrorWithReason(exception.UnexpectedError, err)
 	}
 
 	if bucket == nil {
@@ -91,7 +91,7 @@ func (s *BucketService) PutValue(name string, key string, value any) error {
 	bucket, err := s.repository.GetBucket(name)
 
 	if err != nil {
-		return exception.NewErroWithReason(exception.UnexpectedError, err)
+		return exception.NewErrorWithReason(exception.UnexpectedError, err)
 	}
 
 	if bucket == nil {
@@ -105,7 +105,7 @@ func (s *BucketService) DeleteValue(name string, key string) error {
 	bucket, err := s.repository.GetBucket(name)
 
 	if err != nil {
-		return exception.NewErroWithReason(exception.UnexpectedError, err)
+		return exception.NewErrorWithReason(exception.UnexpectedError, err)
 	}
 
 	if bucket == nil {

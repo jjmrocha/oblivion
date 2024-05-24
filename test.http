@@ -17,10 +17,6 @@ Content-Type: application/json
 
 #####
 
-GET {{BaseURL}}/v1/buckets
-
-#####
-
 GET {{BaseURL}}/v1/buckets/{{BucketName}}
 
 ####
