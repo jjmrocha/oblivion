@@ -82,3 +82,25 @@ func (r *InMemoryRepo) Read(bucket *model.Bucket, key string) (any, error) {
 
 	return value, nil
 }
+
+func (r *InMemoryRepo) Store(bucket *model.Bucket, key string, value any) error {
+	store, found := r.storage[bucket.Name]
+	if !found {
+		return exception.NewError(exception.BucketNotFound, bucket.Name)
+	}
+
+	store[key] = value
+
+	return nil
+}
+
+func (r *InMemoryRepo) Delete(bucket *model.Bucket, key string) error {
+	store, found := r.storage[bucket.Name]
+	if !found {
+		return exception.NewError(exception.BucketNotFound, bucket.Name)
+	}
+
+	delete(store, key)
+
+	return nil
+}

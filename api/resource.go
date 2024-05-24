@@ -83,7 +83,24 @@ func (api *Api) DeleteBucket(w http.ResponseWriter, req *http.Request) {
 }
 
 func (api *Api) UpdateKey(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprintf(w, "Welcome to the home page!")
+	bucketName := req.PathValue("bucket")
+	key := req.PathValue("key")
+
+	var value map[string]any
+
+	err := json.NewDecoder(req.Body).Decode(&value)
+	if err != nil {
+		writeJSONErrorResponse(w, exception.NewError(exception.BadRequestPaylod))
+		return
+	}
+
+	err = api.bucketService.PutValue(bucketName, key, value)
+	if err != nil {
+		writeJSONErrorResponse(w, err)
+		return
+	}
+
+	writeJSONResponse(w, http.StatusNoContent, nil)
 }
 
 func (api *Api) ReadKey(w http.ResponseWriter, req *http.Request) {
@@ -100,7 +117,16 @@ func (api *Api) ReadKey(w http.ResponseWriter, req *http.Request) {
 }
 
 func (api *Api) DeleteKey(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprintf(w, "Welcome to the home page!")
+	bucketName := req.PathValue("bucket")
+	key := req.PathValue("key")
+
+	err := api.bucketService.DeleteValue(bucketName, key)
+	if err != nil {
+		writeJSONErrorResponse(w, err)
+		return
+	}
+
+	writeJSONResponse(w, http.StatusNoContent, nil)
 }
 
 func (api *Api) Search(w http.ResponseWriter, req *http.Request) {

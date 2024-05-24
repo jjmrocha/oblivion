@@ -86,3 +86,31 @@ func (s *BucketService) GetValue(name string, key string) (any, error) {
 
 	return s.repository.Read(bucket, key)
 }
+
+func (s *BucketService) PutValue(name string, key string, value any) error {
+	bucket, err := s.repository.GetBucket(name)
+
+	if err != nil {
+		return exception.NewErroWithReason(exception.UnexpectedError, err)
+	}
+
+	if bucket == nil {
+		return exception.NewError(exception.BucketNotFound, name)
+	}
+
+	return s.repository.Store(bucket, key, value)
+}
+
+func (s *BucketService) DeleteValue(name string, key string) error {
+	bucket, err := s.repository.GetBucket(name)
+
+	if err != nil {
+		return exception.NewErroWithReason(exception.UnexpectedError, err)
+	}
+
+	if bucket == nil {
+		return exception.NewError(exception.BucketNotFound, name)
+	}
+
+	return s.repository.Delete(bucket, key)
+}

@@ -29,8 +29,24 @@ DELETE {{BaseURL}}/v1/buckets/{{BucketName}}
 
 ####
 
-@Key = key1
+@Key = key2
 
 GET {{BaseURL}}/v1/buckets/{{BucketName}}/keys/{{Key}}
+
+####
+
+PUT {{BaseURL}}/v1/buckets/{{BucketName}}/keys/{{Key}}
+Content-Type: application/json
+
+{
+  "string": "some text",
+  "int": 123,
+  "float": 123.45,
+  "bool": false
+}
+
+####
+
+DELETE {{BaseURL}}/v1/buckets/{{BucketName}}/keys/{{Key}}
 
 ####
