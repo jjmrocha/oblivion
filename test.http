@@ -46,7 +46,7 @@ DELETE {{BaseURL}}/v1/buckets/{{BucketName}}
 
 ####
 
-@Key = key
+@Key = key5
 
 GET {{BaseURL}}/v1/buckets/{{BucketName}}/keys/{{Key}}
 
@@ -57,7 +57,7 @@ Content-Type: application/json
 
 {
   "string": "some text",
-  "int": 123,
+  "int": 5,
   "float": 123.456,
   "bool": false
 }
@@ -67,3 +67,5 @@ Content-Type: application/json
 DELETE {{BaseURL}}/v1/buckets/{{BucketName}}/keys/{{Key}}
 
 ####
+
+GET {{BaseURL}}/v1/buckets/{{BucketName}}/keys?bool=false

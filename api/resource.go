@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -131,7 +130,16 @@ func (api *Api) SetRoutes(mux *http.ServeMux) {
 	})
 
 	mux.HandleFunc("GET /v1/buckets/{bucket}/keys", func(w http.ResponseWriter, req *http.Request) {
-		fmt.Fprintf(w, "Welcome to the home page!")
+		bucketName := req.PathValue("bucket")
+		query := req.URL.Query()
+
+		keys, err := api.bucketService.Search(bucketName, query)
+		if err != nil {
+			writeJSONErrorResponse(w, err)
+			return
+		}
+
+		writeJSONResponse(w, http.StatusOK, keys)
 	})
 }
 

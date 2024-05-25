@@ -1,6 +1,8 @@
 package bucket
 
 import (
+	"strconv"
+
 	"github.com/jjmrocha/oblivion/bucket/model"
 	"github.com/jjmrocha/oblivion/bucket/model/apperror"
 	"github.com/jjmrocha/oblivion/storage"
@@ -118,6 +120,102 @@ func (s *BucketService) DeleteValue(name string, key string) error {
 	}
 
 	return s.repository.Delete(bucket, key)
+}
+
+func (s *BucketService) Search(name string, query map[string][]string) ([]string, error) {
+	bucket, err := s.repository.GetBucket(name)
+
+	if err != nil {
+		return nil, apperror.WithReason(model.UnexpectedError, err)
+	}
+
+	if bucket == nil {
+		return nil, apperror.New(model.BucketNotFound, name)
+	}
+
+	normalized, err := normalize(query, bucket.Schema)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.repository.FindKeys(bucket, normalized)
+}
+
+func normalize(query map[string][]string, schema []model.Field) (map[string][]any, error) {
+	fieldMap := make(map[string]model.Field)
+	for _, field := range schema {
+		fieldMap[field.Name] = field
+	}
+
+	normalized := make(map[string][]any)
+
+	for name, values := range query {
+		field, found := fieldMap[name]
+		if !found {
+			return nil, apperror.New(model.UnknownField, name)
+		}
+
+		switch field.Type {
+		case model.StringDataType:
+			normalized[name] = convertStrings(values)
+		case model.NumberDataType:
+			floats, err := convertFloats(values)
+			if err != nil {
+				return nil, apperror.New(model.InvalidField, name)
+			}
+
+			normalized[name] = floats
+		case model.BoolDataType:
+			bools, err := convertBools(values)
+			if err != nil {
+				return nil, apperror.New(model.InvalidField, name)
+			}
+
+			normalized[name] = bools
+		}
+	}
+
+	return normalized, nil
+}
+
+func convertFloats(input []string) ([]any, error) {
+	values := make([]any, 0)
+
+	for _, strValue := range input {
+		value, err := strconv.ParseFloat(strValue, 64)
+		if err != nil {
+			return nil, err
+		}
+
+		values = append(values, value)
+	}
+
+	return values, nil
+}
+
+func convertStrings(input []string) []any {
+	values := make([]any, 0)
+
+	for _, value := range input {
+		values = append(values, value)
+	}
+
+	return values
+}
+
+func convertBools(input []string) ([]any, error) {
+	values := make([]any, 0)
+
+	for _, strValue := range input {
+		value, err := strconv.ParseBool(strValue)
+		if err != nil {
+			return nil, err
+		}
+
+		values = append(values, value)
+	}
+
+	return values, nil
 }
 
 func checkValue(object map[string]any, schema []model.Field) error {

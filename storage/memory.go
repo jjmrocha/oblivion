@@ -116,3 +116,42 @@ func (r *InMemoryRepo) Delete(bucket *model.Bucket, key string) error {
 
 	return nil
 }
+
+func (r *InMemoryRepo) FindKeys(bucket *model.Bucket, query map[string][]any) ([]string, error) {
+	bucketDef, found := r.storage[bucket.Name]
+	if !found {
+		return nil, apperror.New(model.BucketNotFound, bucket.Name)
+	}
+
+	keys := make([]string, 0)
+
+	for key, object := range bucketDef.keys {
+		converted, _ := object.(map[string]any)
+		if matches(converted, query) {
+			keys = append(keys, key)
+		}
+	}
+
+	return keys, nil
+}
+
+func matches(object map[string]any, query map[string][]any) bool {
+	for field, criteria := range query {
+		value := object[field]
+		if match := matchesOne(value, criteria); !match {
+			return false
+		}
+	}
+
+	return true
+}
+
+func matchesOne(value any, criteria []any) bool {
+	for _, requested := range criteria {
+		if value == requested {
+			return true
+		}
+	}
+
+	return false
+}
