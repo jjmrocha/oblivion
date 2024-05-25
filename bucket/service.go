@@ -87,7 +87,7 @@ func (s *BucketService) GetValue(name string, key string) (any, error) {
 	return s.repository.Read(bucket, key)
 }
 
-func (s *BucketService) PutValue(name string, key string, value any) error {
+func (s *BucketService) PutValue(name string, key string, value map[string]any) error {
 	bucket, err := s.repository.GetBucket(name)
 
 	if err != nil {
@@ -96,6 +96,11 @@ func (s *BucketService) PutValue(name string, key string, value any) error {
 
 	if bucket == nil {
 		return apperror.New(model.BucketNotFound, name)
+	}
+
+	err = checkValue(value, bucket.Schema)
+	if err != nil {
+		return err
 	}
 
 	return s.repository.Store(bucket, key, value)
@@ -113,4 +118,45 @@ func (s *BucketService) DeleteValue(name string, key string) error {
 	}
 
 	return s.repository.Delete(bucket, key)
+}
+
+func checkValue(object map[string]any, schema []model.Field) error {
+	fieldMap := make(map[string]model.Field)
+	for _, field := range schema {
+		fieldMap[field.Name] = field
+	}
+
+	for name, value := range object {
+		field, found := fieldMap[name]
+		if !found {
+			return apperror.New(model.UnknownField, name)
+		}
+
+		switch field.Type {
+		case model.StringDataType:
+			if _, ok := value.(string); !ok {
+				return apperror.New(model.InvalidField, name)
+			}
+		case model.NumberDataType:
+			if _, ok := value.(float64); !ok {
+				return apperror.New(model.InvalidField, name)
+			}
+		case model.BoolDataType:
+			if _, ok := value.(bool); !ok {
+				return apperror.New(model.InvalidField, name)
+			}
+		}
+
+		for _, field := range schema {
+			if !field.Required {
+				continue
+			}
+
+			if _, found := object[field.Name]; !found {
+				return apperror.New(model.MissingField, field.Name)
+			}
+		}
+	}
+
+	return nil
 }

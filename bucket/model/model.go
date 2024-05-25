@@ -9,8 +9,7 @@ type DataType string
 
 const (
 	StringDataType DataType = "string"
-	IntDataType    DataType = "int"
-	FloatDataType  DataType = "float"
+	NumberDataType DataType = "number"
 	BoolDataType   DataType = "bool"
 )
 

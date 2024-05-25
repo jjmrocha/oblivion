@@ -21,11 +21,11 @@ Content-Type: application/json
     },
     {
       "field": "int",
-      "type": "int"
+      "type": "number"
     },
     {
       "field": "float",
-      "type": "float",
+      "type": "number",
       "not-null": true
     },
     {

@@ -23,8 +23,9 @@ func checkBucketCreation(name string, schema []model.Field) error {
 			return apperror.New(model.InvalidSchema, field.Name)
 		}
 
-		if field.Type != model.BoolDataType && field.Type != model.FloatDataType &&
-			field.Type != model.IntDataType && field.Type != model.StringDataType {
+		if field.Type != model.StringDataType &&
+			field.Type != model.NumberDataType &&
+			field.Type != model.BoolDataType {
 			return apperror.New(model.InvalidSchema, field.Name)
 		}
 	}

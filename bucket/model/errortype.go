@@ -12,8 +12,13 @@ const (
 	BucketNotFound
 	// Keys related
 	KeyNotFound
+	// Value related
+	MissingField
+	InvalidField
+	UnknownField
 	// Request related
 	BadRequestPaylod
+	// Schema related
 	InvalidBucketName
 	SchemaMissing
 	InvalidSchema
@@ -38,6 +43,18 @@ var errorTypeDefMap = map[ErrorType]errorTypeDef{
 	KeyNotFound: {
 		statusCode: http.StatusNotFound,
 		template:   "Key %v not found on bucket %v",
+	},
+	MissingField: {
+		statusCode: http.StatusUnprocessableEntity,
+		template:   "Missing field: %v",
+	},
+	InvalidField: {
+		statusCode: http.StatusUnprocessableEntity,
+		template:   "Invalid value on field %v",
+	},
+	UnknownField: {
+		statusCode: http.StatusUnprocessableEntity,
+		template:   "Unknown field: %v",
 	},
 	InvalidBucketName: {
 		statusCode: http.StatusBadRequest,
