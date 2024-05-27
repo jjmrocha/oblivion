@@ -17,7 +17,8 @@ Content-Type: application/json
     {
       "field": "string",
       "type": "string",
-      "not-null": true
+      "not-null": true,
+      "indexed": true
     },
     {
       "field": "int",
@@ -31,7 +32,8 @@ Content-Type: application/json
     {
       "field": "bool",
       "type": "bool",
-      "not-null": false
+      "not-null": false,
+      "indexed": true
     }
   ]
 }
