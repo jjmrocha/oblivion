@@ -15,6 +15,8 @@ func main() {
 	// init
 	//repository := storage.NewInMemoryRepo()
 	repository := storage.NewSQLDBRepo("sqlite3", "./test.db")
+	defer repository.Close()
+
 	buckectService := bucket.NewBucketService(repository)
 	api := api.NewApi(buckectService)
 	// setup routing

@@ -22,6 +22,10 @@ func NewInMemoryRepo() *InMemoryRepo {
 	return &repo
 }
 
+func (r *InMemoryRepo) Close() {
+	clear(r.storage)
+}
+
 func (r *InMemoryRepo) GetAllBuckets() ([]*model.Bucket, error) {
 	bucketList := make([]*model.Bucket, 0)
 

@@ -24,6 +24,12 @@ func NewSQLDBRepo(driver string, datasource string) *SQLDBRepo {
 	return &repo
 }
 
+func (s *SQLDBRepo) Close() {
+	if err := s.db.Close(); err != nil {
+		log.Printf("Error closing db: %v\n", err)
+	}
+}
+
 func (s *SQLDBRepo) GetAllBuckets() ([]*model.Bucket, error) {
 	panic("Not implemented")
 }

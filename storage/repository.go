@@ -11,4 +11,5 @@ type Repository interface {
 	Read(*model.Bucket, string) (any, error)
 	Delete(*model.Bucket, string) error
 	FindKeys(*model.Bucket, map[string][]any) ([]string, error)
+	Close()
 }
