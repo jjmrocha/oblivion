@@ -1,6 +1,7 @@
 package bucket
 
 import (
+	"regexp"
 	"strconv"
 
 	"github.com/jjmrocha/oblivion/bucket/model"
@@ -25,16 +26,19 @@ func (s *BucketService) BucketList() ([]string, error) {
 		return nil, apperror.WithReason(model.UnexpectedError, err)
 	}
 
-	bucketNames := make([]string, 0, len(bucketList))
-
-	for _, bucket := range bucketList {
-		bucketNames = append(bucketNames, bucket.Name)
-	}
-
-	return bucketNames, nil
+	return bucketList, nil
 }
 
 func (s *BucketService) CreateBucket(name string, schema []model.Field) (*model.Bucket, error) {
+	matched, err := regexp.MatchString("^[a-zA-Z][a-zA-Z_0-9]*[a-zA-Z0-9]$", name)
+	if err != nil {
+		return nil, apperror.WithReason(model.UnexpectedError, err)
+	}
+
+	if !matched {
+		return nil, apperror.New(model.InvalidBucketName, name)
+	}
+
 	bucket, err := s.repository.GetBucket(name)
 	if err != nil {
 		return nil, apperror.WithReason(model.UnexpectedError, err)

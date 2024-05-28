@@ -17,6 +17,11 @@ func NewSQLDBRepo(driver string, datasource string) *SQLDBRepo {
 		log.Panicf("Error opening db %v using driver %v: %v", datasource, driver, err)
 	}
 
+	err = createCatalogIfNotExist(db)
+	if err != nil {
+		log.Panicf("Error creating db catalog on %v using driver %v: %v", datasource, driver, err)
+	}
+
 	repo := SQLDBRepo{
 		db: db,
 	}
@@ -24,40 +29,59 @@ func NewSQLDBRepo(driver string, datasource string) *SQLDBRepo {
 	return &repo
 }
 
-func (s *SQLDBRepo) Close() {
-	if err := s.db.Close(); err != nil {
+func (r *SQLDBRepo) Close() {
+	if err := r.db.Close(); err != nil {
 		log.Printf("Error closing db: %v\n", err)
 	}
 }
 
-func (s *SQLDBRepo) GetAllBuckets() ([]*model.Bucket, error) {
-	panic("Not implemented")
+func (r *SQLDBRepo) GetAllBuckets() ([]string, error) {
+	return listBuckets(r.db)
 }
 
-func (s *SQLDBRepo) CreateBucket(name string, schema []model.Field) (*model.Bucket, error) {
-	panic("Not implemented")
+func (r *SQLDBRepo) CreateBucket(name string, schema []model.Field) (*model.Bucket, error) {
+	if err := createTable(r.db, name, schema); err != nil {
+		return nil, err
+	}
+
+	bucket := model.Bucket{
+		Name:   name,
+		Schema: schema,
+	}
+
+	return &bucket, nil
 }
 
-func (s *SQLDBRepo) GetBucket(name string) (*model.Bucket, error) {
-	panic("Not implemented")
+func (r *SQLDBRepo) GetBucket(name string) (*model.Bucket, error) {
+	schema, err := readSchema(r.db, name)
+	if err != nil {
+		return nil, err
+	}
+
+	bucket := model.Bucket{
+		Name:   name,
+		Schema: schema,
+	}
+
+	return &bucket, nil
 }
 
-func (s *SQLDBRepo) DropBucket(name string) error {
-	panic("Not implemented")
+func (r *SQLDBRepo) DropBucket(name string) error {
+	return deleteTable(r.db, name)
 }
 
-func (s *SQLDBRepo) Store(bucket *model.Bucket, key string, value any) error {
-	panic("Not implemented")
+func (r *SQLDBRepo) Store(bucket *model.Bucket, key string, value map[string]any) error {
+	return upsertKey(r.db, bucket.Name, key, value)
 }
 
-func (s *SQLDBRepo) Read(bucket *model.Bucket, key string) (any, error) {
-	panic("Not implemented")
+func (r *SQLDBRepo) Read(bucket *model.Bucket, key string) (map[string]any, error) {
+	return findKey(r.db, bucket.Name, key)
 }
 
-func (s *SQLDBRepo) Delete(bucket *model.Bucket, key string) error {
-	panic("Not implemented")
+func (r *SQLDBRepo) Delete(bucket *model.Bucket, key string) error {
+	return deleteKey(r.db, bucket.Name, key)
 }
 
-func (s *SQLDBRepo) FindKeys(bucket *model.Bucket, query map[string][]any) ([]string, error) {
-	panic("Not implemented")
+func (r *SQLDBRepo) FindKeys(bucket *model.Bucket, query map[string][]any) ([]string, error) {
+	return search(r.db, bucket.Name, query)
 }

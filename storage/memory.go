@@ -26,16 +26,11 @@ func (r *InMemoryRepo) Close() {
 	clear(r.storage)
 }
 
-func (r *InMemoryRepo) GetAllBuckets() ([]*model.Bucket, error) {
-	bucketList := make([]*model.Bucket, 0)
+func (r *InMemoryRepo) GetAllBuckets() ([]string, error) {
+	bucketList := make([]string, 0)
 
-	for name, bucketDef := range r.storage {
-		bucket := model.Bucket{
-			Name:   name,
-			Schema: bucketDef.schema,
-		}
-
-		bucketList = append(bucketList, &bucket)
+	for name := range r.storage {
+		bucketList = append(bucketList, name)
 	}
 
 	return bucketList, nil
@@ -85,7 +80,7 @@ func (r *InMemoryRepo) DropBucket(name string) error {
 	return nil
 }
 
-func (r *InMemoryRepo) Read(bucket *model.Bucket, key string) (any, error) {
+func (r *InMemoryRepo) Read(bucket *model.Bucket, key string) (map[string]any, error) {
 	bucketDef, found := r.storage[bucket.Name]
 	if !found {
 		return nil, apperror.New(model.BucketNotFound, bucket.Name)
@@ -99,7 +94,7 @@ func (r *InMemoryRepo) Read(bucket *model.Bucket, key string) (any, error) {
 	return value, nil
 }
 
-func (r *InMemoryRepo) Store(bucket *model.Bucket, key string, value any) error {
+func (r *InMemoryRepo) Store(bucket *model.Bucket, key string, value map[string]any) error {
 	bucketDef, found := r.storage[bucket.Name]
 	if !found {
 		return apperror.New(model.BucketNotFound, bucket.Name)
