@@ -5,9 +5,11 @@ import (
 	"github.com/jjmrocha/oblivion/bucket/model/apperror"
 )
 
+type object map[string]any
+
 type bucketDef struct {
 	schema []model.Field
-	keys   map[string]any
+	keys   map[string]object
 }
 
 type InMemoryRepo struct {
@@ -42,7 +44,7 @@ func (r *InMemoryRepo) CreateBucket(name string, schema []model.Field) (*model.B
 	}
 
 	bucketDef := bucketDef{
-		keys:   make(map[string]any),
+		keys:   make(map[string]object),
 		schema: schema,
 	}
 
@@ -124,9 +126,8 @@ func (r *InMemoryRepo) FindKeys(bucket *model.Bucket, query map[string][]any) ([
 
 	keys := make([]string, 0)
 
-	for key, object := range bucketDef.keys {
-		converted, _ := object.(map[string]any)
-		if matches(converted, query) {
+	for key, obj := range bucketDef.keys {
+		if matches(obj, query) {
 			keys = append(keys, key)
 		}
 	}

@@ -13,8 +13,8 @@ import (
 
 func main() {
 	// init
-	//repository := storage.NewInMemoryRepo()
-	repository := storage.NewSQLDBRepo("sqlite3", "./test.db")
+	repository := storage.NewInMemoryRepo()
+	//repository := storage.NewSQLDBRepo("sqlite3", "./test.db")
 	defer repository.Close()
 
 	buckectService := bucket.NewBucketService(repository)
@@ -23,5 +23,6 @@ func main() {
 	mux := http.NewServeMux()
 	api.SetRoutes(mux)
 	// start
+	log.Println("Server running")
 	log.Fatal(http.ListenAndServe(":9090", mux))
 }
