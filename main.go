@@ -7,11 +7,14 @@ import (
 	"github.com/jjmrocha/oblivion/api"
 	"github.com/jjmrocha/oblivion/bucket"
 	"github.com/jjmrocha/oblivion/storage"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
 	// init
-	repository := storage.NewInMemoryRepo()
+	//repository := storage.NewInMemoryRepo()
+	repository := storage.NewSQLDBRepo("sqlite3", "./test.db")
 	buckectService := bucket.NewBucketService(repository)
 	api := api.NewApi(buckectService)
 	// setup routing

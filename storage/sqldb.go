@@ -1,17 +1,24 @@
 package storage
 
-import "github.com/jjmrocha/oblivion/bucket/model"
+import (
+	"database/sql"
+	"log"
 
-type SQLRepository interface {
-}
+	"github.com/jjmrocha/oblivion/bucket/model"
+)
 
 type SQLDBRepo struct {
-	impl SQLRepository
+	db *sql.DB
 }
 
-func NewSQLDBRepo(sql SQLRepository) *SQLDBRepo {
+func NewSQLDBRepo(driver string, datasource string) *SQLDBRepo {
+	db, err := sql.Open(driver, datasource)
+	if err != nil {
+		log.Panicf("Error opening db %v using driver %v: %v", datasource, driver, err)
+	}
+
 	repo := SQLDBRepo{
-		impl: sql,
+		db: db,
 	}
 
 	return &repo
