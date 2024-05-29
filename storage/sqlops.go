@@ -4,18 +4,19 @@ import (
 	"database/sql"
 	"encoding/json"
 	"log"
+	"strings"
 
 	"github.com/jjmrocha/oblivion/bucket/model"
 	"github.com/jjmrocha/oblivion/bucket/model/apperror"
 )
 
 func createCatalogIfNotExist(db *sql.DB) error {
-	sql := `create table if not exists oblivion (
+	query := `create table if not exists oblivion (
 				bucket_name varchar(30) primary key, 
 				schema text not null
 			)`
 
-	_, err := db.Exec(sql)
+	_, err := db.Exec(query)
 
 	return err
 }
@@ -161,11 +162,58 @@ func upsertKey(db *sql.DB, bucket string, key string, value map[string]any) erro
 }
 
 func findKey(db *sql.DB, bucket string, key string) (map[string]any, error) {
-	panic("Not done")
+	schema, err := readSchema(db, bucket)
+	if err != nil {
+		return nil, err
+	}
+
+	columns := make([]string, 0)
+	for _, field := range schema {
+		columns = append(columns, field.Name)
+	}
+
+	columnList := strings.Join(columns, ", ")
+	query := "select " + columnList + " from " + bucket + " where key = ?"
+
+	stm, err := db.Prepare(query)
+	if err != nil {
+		return nil, err
+	}
+
+	defer stm.Close()
+
+	row := stm.QueryRow(key)
+
+	values := make([]any, len(columns))
+
+	err = row.Scan(values...)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	obj := make(map[string]any)
+
+	for i, column := range columns {
+		obj[column] = values[i]
+	}
+
+	return obj, nil
 }
 
 func deleteKey(db *sql.DB, bucket string, key string) error {
-	panic("Not done")
+	query := "delete from " + bucket + " where key = ?"
+
+	stm, err := db.Prepare(query)
+	if err != nil {
+		return err
+	}
+
+	_, err = stm.Exec(key)
+	return err
 }
 
 func search(db *sql.DB, bucket string, query map[string][]any) ([]string, error) {
@@ -183,33 +231,33 @@ func bucketExists(db *sql.DB, bucket string) (bool, error) {
 }
 
 func createTable(tx *sql.Tx, tableName string, schema []model.Field) error {
-	sql := "create table " + tableName + " (key varchar(50) primary key"
+	query := "create table " + tableName + " (key varchar(50) primary key"
 	for _, field := range schema {
-		sql += " , " + field.Name
+		query += " , " + field.Name
 
 		switch field.Type {
 		case model.StringDataType:
-			sql += " text"
+			query += " text"
 		case model.NumberDataType:
-			sql += " numeric"
+			query += " numeric"
 		case model.BoolDataType:
-			sql += " boolean"
+			query += " boolean"
 		}
 
 		if field.Required {
-			sql += " not null"
+			query += " not null"
 		}
 	}
-	sql += ")"
+	query += ")"
 
-	_, err := tx.Exec(sql)
+	_, err := tx.Exec(query)
 	return err
 }
 
 func dropTable(tx *sql.Tx, tableName string) error {
-	sql := "drop table " + tableName
+	query := "drop table " + tableName
 
-	_, err := tx.Exec(sql)
+	_, err := tx.Exec(query)
 	return err
 }
 
@@ -242,8 +290,8 @@ func removeBucketFromCatalog(tx *sql.Tx, tableName string) error {
 
 func createIndex(tx *sql.Tx, tableName string, column string) error {
 	indexName := "i_" + tableName + "_" + column
-	sql := "create index " + indexName + " on " + tableName + " (" + column + ")"
+	query := "create index " + indexName + " on " + tableName + " (" + column + ")"
 
-	_, err := tx.Exec(sql)
+	_, err := tx.Exec(query)
 	return err
 }
