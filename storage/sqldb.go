@@ -40,7 +40,7 @@ func (r *SQLDBRepo) GetAllBuckets() ([]string, error) {
 }
 
 func (r *SQLDBRepo) CreateBucket(name string, schema []model.Field) (*model.Bucket, error) {
-	if err := createTable(r.db, name, schema); err != nil {
+	if err := createBucket(r.db, name, schema); err != nil {
 		return nil, err
 	}
 
@@ -58,6 +58,10 @@ func (r *SQLDBRepo) GetBucket(name string) (*model.Bucket, error) {
 		return nil, err
 	}
 
+	if schema == nil {
+		return nil, nil
+	}
+
 	bucket := model.Bucket{
 		Name:   name,
 		Schema: schema,
@@ -67,7 +71,7 @@ func (r *SQLDBRepo) GetBucket(name string) (*model.Bucket, error) {
 }
 
 func (r *SQLDBRepo) DropBucket(name string) error {
-	return deleteTable(r.db, name)
+	return deleteBucket(r.db, name)
 }
 
 func (r *SQLDBRepo) Store(bucket *model.Bucket, key string, value map[string]any) error {

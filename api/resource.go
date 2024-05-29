@@ -99,6 +99,11 @@ func (api *Api) SetRoutes(mux *http.ServeMux) {
 		bucketName := req.PathValue("bucket")
 		key := req.PathValue("key")
 
+		if len(key) == 0 || len(key) > 50 {
+			writeJSONErrorResponse(w, apperror.New(model.InvalidKey, key, "0 < key <= 50"))
+			return
+		}
+
 		var value map[string]any
 
 		err := json.NewDecoder(req.Body).Decode(&value)

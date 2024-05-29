@@ -12,6 +12,7 @@ const (
 	BucketNotFound
 	// Keys related
 	KeyNotFound
+	InvalidKey
 	// Value related
 	MissingField
 	InvalidField
@@ -43,6 +44,10 @@ var errorTypeDefMap = map[ErrorType]errorTypeDef{
 	KeyNotFound: {
 		statusCode: http.StatusNotFound,
 		template:   "Key %v not found on bucket %v",
+	},
+	InvalidKey: {
+		statusCode: http.StatusBadRequest,
+		template:   "Invalid key %v: %v",
 	},
 	MissingField: {
 		statusCode: http.StatusUnprocessableEntity,

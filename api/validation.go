@@ -1,6 +1,8 @@
 package api
 
 import (
+	"regexp"
+
 	"github.com/jjmrocha/oblivion/bucket/model"
 	"github.com/jjmrocha/oblivion/bucket/model/apperror"
 )
@@ -15,7 +17,12 @@ func checkBucketCreation(name string, schema []model.Field) error {
 	}
 
 	for _, field := range schema {
-		if len(field.Name) == 0 {
+		matched, err := regexp.MatchString("^[a-zA-Z][a-zA-Z0-9]*[a-zA-Z0-9]$", name)
+		if err != nil {
+			return apperror.WithReason(model.UnexpectedError, err)
+		}
+
+		if !matched || len(field.Name) == 0 || len(field.Name) > 30 {
 			return apperror.New(model.InvalidSchema, field.Name)
 		}
 

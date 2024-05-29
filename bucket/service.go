@@ -35,7 +35,7 @@ func (s *BucketService) CreateBucket(name string, schema []model.Field) (*model.
 		return nil, apperror.WithReason(model.UnexpectedError, err)
 	}
 
-	if !matched {
+	if !matched || len(name) > 30 {
 		return nil, apperror.New(model.InvalidBucketName, name)
 	}
 
