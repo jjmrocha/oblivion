@@ -7,7 +7,14 @@ import (
 )
 
 func createCatalogIfNotExist(db *sql.DB) error {
-	panic("Not done")
+	sql := `create table if not exists oblivion (
+							bucket_name text primary key, 
+							schema text not null
+					)`
+
+	_, err := db.Exec(sql)
+
+	return err
 }
 
 func createTable(db *sql.DB, bucket string, schema []model.Field) error {
