@@ -75,17 +75,17 @@ func (r *SQLDBRepo) DropBucket(name string) error {
 }
 
 func (r *SQLDBRepo) Store(bucket *model.Bucket, key string, value map[string]any) error {
-	return upsertKey(r.db, bucket.Name, key, value)
+	return upsertKey(r.db, bucket, key, value)
 }
 
 func (r *SQLDBRepo) Read(bucket *model.Bucket, key string) (map[string]any, error) {
-	return findKey(r.db, bucket.Name, key)
+	return findKey(r.db, bucket, key)
 }
 
 func (r *SQLDBRepo) Delete(bucket *model.Bucket, key string) error {
-	return deleteKey(r.db, bucket.Name, key)
+	return deleteKey(r.db, bucket, key)
 }
 
 func (r *SQLDBRepo) FindKeys(bucket *model.Bucket, query map[string][]any) ([]string, error) {
-	return search(r.db, bucket.Name, query)
+	return search(r.db, bucket, query)
 }

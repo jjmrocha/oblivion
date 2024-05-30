@@ -157,23 +157,28 @@ func deleteBucket(db *sql.DB, bucket string) error {
 	return nil
 }
 
-func upsertKey(db *sql.DB, bucket string, key string, value map[string]any) error {
-	panic("Not done")
-}
-
-func findKey(db *sql.DB, bucket string, key string) (map[string]any, error) {
-	schema, err := readSchema(db, bucket)
+func upsertKey(db *sql.DB, bucket *model.Bucket, key string, value map[string]any) error {
+	old, err := findKey(db, bucket, key)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	columns := make([]string, 0)
-	for _, field := range schema {
+	if old != nil {
+		return updateValue(db, bucket, key, value)
+	}
+
+	return insertValue(db, bucket, key, value)
+}
+
+func findKey(db *sql.DB, bucket *model.Bucket, key string) (map[string]any, error) {
+	columnCount := len(bucket.Schema)
+	columns := make([]string, 0, columnCount)
+	for _, field := range bucket.Schema {
 		columns = append(columns, field.Name)
 	}
 
 	columnList := strings.Join(columns, ", ")
-	query := "select " + columnList + " from " + bucket + " where key = ?"
+	query := "select " + columnList + " from " + bucket.Name + " where key = ?"
 
 	stm, err := db.Prepare(query)
 	if err != nil {
@@ -184,7 +189,20 @@ func findKey(db *sql.DB, bucket string, key string) (map[string]any, error) {
 
 	row := stm.QueryRow(key)
 
-	values := make([]any, len(columns))
+	values := make([]any, columnCount)
+	for i, field := range bucket.Schema {
+		switch field.Type {
+		case model.StringDataType:
+			var holder sql.NullString
+			values[i] = &holder
+		case model.NumberDataType:
+			var holder sql.NullFloat64
+			values[i] = &holder
+		case model.BoolDataType:
+			var holder sql.NullBool
+			values[i] = &holder
+		}
+	}
 
 	err = row.Scan(values...)
 	if err != nil {
@@ -197,15 +215,31 @@ func findKey(db *sql.DB, bucket string, key string) (map[string]any, error) {
 
 	obj := make(map[string]any)
 
-	for i, column := range columns {
-		obj[column] = values[i]
+	for i, field := range bucket.Schema {
+		switch field.Type {
+		case model.StringDataType:
+			holder := values[i].(*sql.NullString)
+			if holder.Valid {
+				obj[field.Name] = holder.String
+			}
+		case model.NumberDataType:
+			holder := values[i].(*sql.NullFloat64)
+			if holder.Valid {
+				obj[field.Name] = holder.Float64
+			}
+		case model.BoolDataType:
+			holder := values[i].(*sql.NullBool)
+			if holder.Valid {
+				obj[field.Name] = holder.Bool
+			}
+		}
 	}
 
 	return obj, nil
 }
 
-func deleteKey(db *sql.DB, bucket string, key string) error {
-	query := "delete from " + bucket + " where key = ?"
+func deleteKey(db *sql.DB, bucket *model.Bucket, key string) error {
+	query := "delete from " + bucket.Name + " where key = ?"
 
 	stm, err := db.Prepare(query)
 	if err != nil {
@@ -216,8 +250,55 @@ func deleteKey(db *sql.DB, bucket string, key string) error {
 	return err
 }
 
-func search(db *sql.DB, bucket string, query map[string][]any) ([]string, error) {
-	panic("Not done")
+func search(db *sql.DB, bucket *model.Bucket, criteria map[string][]any) ([]string, error) {
+	where := ""
+	values := make([]any, 0, len(criteria))
+
+	for field, valueList := range criteria {
+		if len(where) > 0 {
+			where += " and "
+		}
+
+		or := ""
+
+		for _, option := range valueList {
+			if len(or) > 0 {
+				or += " or "
+			}
+
+			or += field + " = ?"
+			values = append(values, option)
+		}
+
+		where += "(" + or + ")"
+	}
+
+	query := "select key from " + bucket.Name + " where " + where
+
+	stm, err := db.Prepare(query)
+	if err != nil {
+		return nil, err
+	}
+	defer stm.Close()
+
+	rows, err := stm.Query(values...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	keyList := make([]string, 0)
+	var key string
+
+	for rows.Next() {
+		if err = rows.Scan(&key); err != nil {
+			return nil, err
+		}
+
+		keyList = append(keyList, key)
+	}
+
+	return keyList, nil
 }
 
 func bucketExists(db *sql.DB, bucket string) (bool, error) {
@@ -293,5 +374,68 @@ func createIndex(tx *sql.Tx, tableName string, column string) error {
 	query := "create index " + indexName + " on " + tableName + " (" + column + ")"
 
 	_, err := tx.Exec(query)
+	return err
+}
+
+func updateValue(db *sql.DB, bucket *model.Bucket, key string, obj map[string]any) error {
+	columnList := ""
+	values := make([]any, 0)
+
+	for _, field := range bucket.Schema {
+		if len(columnList) > 0 {
+			columnList += ", "
+		}
+
+		value, found := obj[field.Name]
+
+		if found {
+			columnList += field.Name + " = ?"
+			values = append(values, value)
+		} else {
+			columnList += field.Name + " = null"
+		}
+	}
+
+	values = append(values, key)
+
+	query := "update " + bucket.Name + " set " + columnList + " where key = ?"
+
+	stm, err := db.Prepare(query)
+	if err != nil {
+		return err
+	}
+
+	defer stm.Close()
+
+	_, err = stm.Exec(values...)
+
+	return err
+}
+
+func insertValue(db *sql.DB, bucket *model.Bucket, key string, obj map[string]any) error {
+	columnCount := len(obj)
+
+	columns := make([]string, 0, columnCount)
+	values := make([]any, 0, columnCount+1)
+	values = append(values, key)
+
+	for field, value := range obj {
+		columns = append(columns, field)
+		values = append(values, value)
+	}
+
+	columnList := strings.Join(columns, ", ")
+	paramList := strings.Join(strings.Split(strings.Repeat("?", columnCount), ""), ", ")
+	query := "insert into " + bucket.Name + " (key, " + columnList + ") values (?, " + paramList + ")"
+
+	stm, err := db.Prepare(query)
+	if err != nil {
+		return err
+	}
+
+	defer stm.Close()
+
+	_, err = stm.Exec(values...)
+
 	return err
 }

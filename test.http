@@ -15,25 +15,34 @@ Content-Type: application/json
   "name": "{{BucketName}}",
   "schema": [
     {
-      "field": "string",
+      "field": "id",
       "type": "string",
       "not-null": true,
       "indexed": true
     },
     {
-      "field": "int",
-      "type": "number"
+      "field": "first_name",
+      "type": "string",
+      "not-null": true,
+      "indexed": false
     },
     {
-      "field": "float",
-      "type": "number",
-      "not-null": true
-    },
-    {
-      "field": "bool",
-      "type": "bool",
-      "not-null": false,
+      "field": "last_name",
+      "type": "string",
+      "not-null": true,
       "indexed": true
+    },
+    {
+      "field": "gender",
+      "type": "string",
+      "not-null": true,
+      "indexed": true
+    },
+    {
+      "field": "age",
+      "type": "number",
+      "not-null": false,
+      "indexed": false
     }
   ]
 }
@@ -48,7 +57,7 @@ DELETE {{BaseURL}}/v1/buckets/{{BucketName}}
 
 ####
 
-@Key = key5
+@Key = id2
 
 GET {{BaseURL}}/v1/buckets/{{BucketName}}/keys/{{Key}}
 
@@ -58,10 +67,10 @@ PUT {{BaseURL}}/v1/buckets/{{BucketName}}/keys/{{Key}}
 Content-Type: application/json
 
 {
-  "string": "some text",
-  "int": 5,
-  "float": 123.456,
-  "bool": false
+  "id": "{{Key}}",
+  "first_name": "Ana",
+  "last_name": "Fialho",
+  "gender": "F"
 }
 
 ####
@@ -70,4 +79,4 @@ DELETE {{BaseURL}}/v1/buckets/{{BucketName}}/keys/{{Key}}
 
 ####
 
-GET {{BaseURL}}/v1/buckets/{{BucketName}}/keys?bool=false
+GET {{BaseURL}}/v1/buckets/{{BucketName}}/keys?gender=F&gender=M&age=55
