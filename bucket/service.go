@@ -81,7 +81,6 @@ func (s *BucketService) DeleteBucket(name string) error {
 
 func (s *BucketService) GetValue(name string, key string) (any, error) {
 	bucket, err := s.repository.GetBucket(name)
-
 	if err != nil {
 		return nil, apperror.WithReason(model.UnexpectedError, err)
 	}
@@ -90,7 +89,16 @@ func (s *BucketService) GetValue(name string, key string) (any, error) {
 		return nil, apperror.New(model.BucketNotFound, name)
 	}
 
-	return s.repository.Read(bucket, key)
+	object, err := s.repository.Read(bucket, key)
+	if err != nil {
+		return nil, apperror.WithReason(model.UnexpectedError, err)
+	}
+
+	if object == nil {
+		return nil, apperror.New(model.KeyNotFound, key, name)
+	}
+
+	return object, nil
 }
 
 func (s *BucketService) PutValue(name string, key string, value map[string]any) error {

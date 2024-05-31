@@ -3,11 +3,9 @@ package storage
 import (
 	"database/sql"
 	"encoding/json"
-	"log"
 	"strings"
 
 	"github.com/jjmrocha/oblivion/bucket/model"
-	"github.com/jjmrocha/oblivion/bucket/model/apperror"
 )
 
 func createCatalogIfNotExist(db *sql.DB) error {
@@ -19,79 +17,6 @@ func createCatalogIfNotExist(db *sql.DB) error {
 	_, err := db.Exec(query)
 
 	return err
-}
-
-func createBucket(db *sql.DB, bucket string, schema []model.Field) error {
-	exists, err := bucketExists(db, bucket)
-	if err != nil {
-		return err
-	}
-
-	if exists {
-		return apperror.New(model.BucketAlreadyExits, bucket)
-	}
-
-	tx, err := db.Begin()
-	if err != nil {
-		return err
-	}
-
-	err = addBucketToCatalog(tx, bucket, schema)
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	err = createTable(tx, bucket, schema)
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	for _, field := range schema {
-		if field.Indexed {
-			err = createIndex(tx, bucket, field.Name)
-			if err != nil {
-				tx.Rollback()
-				return err
-			}
-		}
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		log.Printf("Error creating bucket %v: %v\n", bucket, err)
-		return err
-	}
-
-	return nil
-}
-
-func listBuckets(db *sql.DB) ([]string, error) {
-	stm, err := db.Prepare("select bucket_name from oblivion")
-	if err != nil {
-		return nil, err
-	}
-	defer stm.Close()
-
-	rows, err := stm.Query()
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	bucketList := make([]string, 0)
-	var bucket string
-
-	for rows.Next() {
-		if err = rows.Scan(&bucket); err != nil {
-			return nil, err
-		}
-
-		bucketList = append(bucketList, bucket)
-	}
-
-	return bucketList, nil
 }
 
 func readSchema(db *sql.DB, bucket string) ([]model.Field, error) {
@@ -121,58 +46,8 @@ func readSchema(db *sql.DB, bucket string) ([]model.Field, error) {
 	return schema, nil
 }
 
-func deleteBucket(db *sql.DB, bucket string) error {
-	exists, err := bucketExists(db, bucket)
-	if err != nil {
-		return err
-	}
-
-	if !exists {
-		return apperror.New(model.BucketNotFound, bucket)
-	}
-
-	tx, err := db.Begin()
-	if err != nil {
-		return err
-	}
-
-	err = removeBucketFromCatalog(tx, bucket)
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	err = dropTable(tx, bucket)
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		log.Printf("Error removing bucket %v: %v\n", bucket, err)
-		return err
-	}
-
-	return nil
-}
-
-func upsertKey(db *sql.DB, bucket *model.Bucket, key string, value map[string]any) error {
-	old, err := findKey(db, bucket, key)
-	if err != nil {
-		return err
-	}
-
-	if old != nil {
-		return updateValue(db, bucket, key, value)
-	}
-
-	return insertValue(db, bucket, key, value)
-}
-
-func findKey(db *sql.DB, bucket *model.Bucket, key string) (map[string]any, error) {
-	columnCount := len(bucket.Schema)
-	columns := make([]string, 0, columnCount)
+func buildFindByKeySql(bucket *model.Bucket) string {
+	columns := make([]string, 0, len(bucket.Schema))
 	for _, field := range bucket.Schema {
 		columns = append(columns, field.Name)
 	}
@@ -180,39 +55,10 @@ func findKey(db *sql.DB, bucket *model.Bucket, key string) (map[string]any, erro
 	columnList := strings.Join(columns, ", ")
 	query := "select " + columnList + " from " + bucket.Name + " where key = ?"
 
-	stm, err := db.Prepare(query)
-	if err != nil {
-		return nil, err
-	}
+	return query
+}
 
-	defer stm.Close()
-
-	row := stm.QueryRow(key)
-
-	values := make([]any, columnCount)
-	for i, field := range bucket.Schema {
-		switch field.Type {
-		case model.StringDataType:
-			var holder sql.NullString
-			values[i] = &holder
-		case model.NumberDataType:
-			var holder sql.NullFloat64
-			values[i] = &holder
-		case model.BoolDataType:
-			var holder sql.NullBool
-			values[i] = &holder
-		}
-	}
-
-	err = row.Scan(values...)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-
-		return nil, err
-	}
-
+func buildObject(bucket *model.Bucket, values []any) map[string]any {
 	obj := make(map[string]any)
 
 	for i, field := range bucket.Schema {
@@ -235,22 +81,28 @@ func findKey(db *sql.DB, bucket *model.Bucket, key string) (map[string]any, erro
 		}
 	}
 
-	return obj, nil
+	return obj
 }
 
-func deleteKey(db *sql.DB, bucket *model.Bucket, key string) error {
-	query := "delete from " + bucket.Name + " where key = ?"
-
-	stm, err := db.Prepare(query)
-	if err != nil {
-		return err
+func valuesForScan(bucket *model.Bucket) []any {
+	values := make([]any, len(bucket.Schema))
+	for i, field := range bucket.Schema {
+		switch field.Type {
+		case model.StringDataType:
+			var holder sql.NullString
+			values[i] = &holder
+		case model.NumberDataType:
+			var holder sql.NullFloat64
+			values[i] = &holder
+		case model.BoolDataType:
+			var holder sql.NullBool
+			values[i] = &holder
+		}
 	}
-
-	_, err = stm.Exec(key)
-	return err
+	return values
 }
 
-func search(db *sql.DB, bucket *model.Bucket, criteria map[string][]any) ([]string, error) {
+func buildSearchQuery(bucket *model.Bucket, criteria map[string][]any) (string, []any) {
 	where := ""
 	values := make([]any, 0, len(criteria))
 
@@ -273,32 +125,13 @@ func search(db *sql.DB, bucket *model.Bucket, criteria map[string][]any) ([]stri
 		where += "(" + or + ")"
 	}
 
-	query := "select key from " + bucket.Name + " where " + where
+	query := "select key from " + bucket.Name
 
-	stm, err := db.Prepare(query)
-	if err != nil {
-		return nil, err
-	}
-	defer stm.Close()
-
-	rows, err := stm.Query(values...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	keyList := make([]string, 0)
-	var key string
-
-	for rows.Next() {
-		if err = rows.Scan(&key); err != nil {
-			return nil, err
-		}
-
-		keyList = append(keyList, key)
+	if len(where) > 0 {
+		query += " where " + where
 	}
 
-	return keyList, nil
+	return query, values
 }
 
 func bucketExists(db *sql.DB, bucket string) (bool, error) {
@@ -438,4 +271,23 @@ func insertValue(db *sql.DB, bucket *model.Bucket, key string, obj map[string]an
 	_, err = stm.Exec(values...)
 
 	return err
+}
+
+func keyExists(db *sql.DB, bucket *model.Bucket, key string) (bool, error) {
+	query := "select count(*) from " + bucket.Name + " where key = ?"
+	stm, err := db.Prepare(query)
+	if err != nil {
+		return false, err
+	}
+	defer stm.Close()
+
+	row := stm.QueryRow(key)
+
+	var count int
+	if err = row.Scan(&count); err != nil {
+		return false, err
+	}
+
+	exists := count > 0
+	return exists, nil
 }
