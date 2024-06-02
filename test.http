@@ -79,4 +79,4 @@ DELETE {{BaseURL}}/v1/buckets/{{BucketName}}/keys/{{Key}}
 
 ####
 
-GET {{BaseURL}}/v1/buckets/{{BucketName}}/keys?gender=F
+GET {{BaseURL}}/v1/buckets/{{BucketName}}/keys?gender=F&gender=M&age=55
