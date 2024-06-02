@@ -5,111 +5,110 @@ import (
 	"strconv"
 
 	"github.com/jjmrocha/oblivion/bucket/model"
-	"github.com/jjmrocha/oblivion/bucket/model/apperror"
-	"github.com/jjmrocha/oblivion/storage"
+	"github.com/jjmrocha/oblivion/repo"
 )
 
 type BucketService struct {
-	repository storage.Repository
+	repo *repo.Repo
 }
 
-func NewBucketService(repo storage.Repository) *BucketService {
+func NewBucketService(repo *repo.Repo) *BucketService {
 	service := BucketService{
-		repository: repo,
+		repo: repo,
 	}
 	return &service
 }
 
 func (s *BucketService) BucketList() ([]string, error) {
-	bucketList, err := s.repository.GetAllBuckets()
+	bucketList, err := s.repo.GetAllBuckets()
 	if err != nil {
-		return nil, apperror.WithReason(model.UnexpectedError, err)
+		return nil, model.ErrorWithReason(model.UnexpectedError, err)
 	}
 
 	return bucketList, nil
 }
 
-func (s *BucketService) CreateBucket(name string, schema []model.Field) (*model.Bucket, error) {
+func (s *BucketService) CreateBucket(name string, schema []repo.Field) (*repo.Bucket, error) {
 	matched, err := regexp.MatchString("^[a-zA-Z][a-zA-Z_0-9]*[a-zA-Z0-9]$", name)
 	if err != nil {
-		return nil, apperror.WithReason(model.UnexpectedError, err)
+		return nil, model.ErrorWithReason(model.UnexpectedError, err)
 	}
 
 	if !matched || len(name) > 30 {
-		return nil, apperror.New(model.InvalidBucketName, name)
+		return nil, model.Error(model.InvalidBucketName, name)
 	}
 
-	bucket, err := s.repository.GetBucket(name)
+	bucket, err := s.repo.GetBucket(name)
 	if err != nil {
-		return nil, apperror.WithReason(model.UnexpectedError, err)
+		return nil, model.ErrorWithReason(model.UnexpectedError, err)
 	}
 
 	if bucket != nil {
-		return nil, apperror.New(model.BucketAlreadyExits, name)
+		return nil, model.Error(model.BucketAlreadyExits, name)
 	}
 
-	return s.repository.CreateBucket(name, schema)
+	return s.repo.CreateBucket(name, schema)
 }
 
-func (s *BucketService) GetBucket(name string) (*model.Bucket, error) {
-	bucket, err := s.repository.GetBucket(name)
+func (s *BucketService) GetBucket(name string) (*repo.Bucket, error) {
+	bucket, err := s.repo.GetBucket(name)
 
 	if err != nil {
-		return nil, apperror.WithReason(model.UnexpectedError, err)
+		return nil, model.ErrorWithReason(model.UnexpectedError, err)
 	}
 
 	if bucket == nil {
-		return nil, apperror.New(model.BucketNotFound, name)
+		return nil, model.Error(model.BucketNotFound, name)
 	}
 
 	return bucket, nil
 }
 
 func (s *BucketService) DeleteBucket(name string) error {
-	bucket, err := s.repository.GetBucket(name)
+	bucket, err := s.repo.GetBucket(name)
 
 	if err != nil {
-		return apperror.WithReason(model.UnexpectedError, err)
+		return model.ErrorWithReason(model.UnexpectedError, err)
 	}
 
 	if bucket == nil {
-		return apperror.New(model.BucketNotFound, name)
+		return model.Error(model.BucketNotFound, name)
 	}
 
-	return s.repository.DropBucket(name)
+	return s.repo.DropBucket(name)
 }
 
 func (s *BucketService) GetValue(name string, key string) (any, error) {
-	bucket, err := s.repository.GetBucket(name)
+	bucket, err := s.repo.GetBucket(name)
 	if err != nil {
-		return nil, apperror.WithReason(model.UnexpectedError, err)
+		return nil, model.ErrorWithReason(model.UnexpectedError, err)
 	}
 
 	if bucket == nil {
-		return nil, apperror.New(model.BucketNotFound, name)
+		return nil, model.Error(model.BucketNotFound, name)
 	}
 
-	object, err := s.repository.Read(bucket, key)
+	object, err := bucket.Read(key)
 	if err != nil {
-		return nil, apperror.WithReason(model.UnexpectedError, err)
+		return nil, model.ErrorWithReason(model.UnexpectedError, err)
 	}
 
 	if object == nil {
-		return nil, apperror.New(model.KeyNotFound, key, name)
+		return nil, model.Error(model.KeyNotFound, key, name)
 	}
 
 	return object, nil
 }
 
 func (s *BucketService) PutValue(name string, key string, value map[string]any) error {
-	bucket, err := s.repository.GetBucket(name)
+	bucket, err := s.repo.GetBucket(name)
 
 	if err != nil {
-		return apperror.WithReason(model.UnexpectedError, err)
+		return model.ErrorWithReason(model.UnexpectedError, err)
 	}
 
 	if bucket == nil {
-		return apperror.New(model.BucketNotFound, name)
+		return model.Error(model.BucketNotFound, name)
 	}
 
 	err = checkValue(value, bucket.Schema)
@@ -117,32 +116,32 @@ func (s *BucketService) PutValue(name string, key string, value map[string]any) 
 		return err
 	}
 
-	return s.repository.Store(bucket, key, value)
+	return bucket.Store(key, value)
 }
 
 func (s *BucketService) DeleteValue(name string, key string) error {
-	bucket, err := s.repository.GetBucket(name)
+	bucket, err := s.repo.GetBucket(name)
 
 	if err != nil {
-		return apperror.WithReason(model.UnexpectedError, err)
+		return model.ErrorWithReason(model.UnexpectedError, err)
 	}
 
 	if bucket == nil {
-		return apperror.New(model.BucketNotFound, name)
+		return model.Error(model.BucketNotFound, name)
 	}
 
-	return s.repository.Delete(bucket, key)
+	return bucket.Delete(key)
 }
 
 func (s *BucketService) Search(name string, query map[string][]string) ([]string, error) {
-	bucket, err := s.repository.GetBucket(name)
+	bucket, err := s.repo.GetBucket(name)
 
 	if err != nil {
-		return nil, apperror.WithReason(model.UnexpectedError, err)
+		return nil, model.ErrorWithReason(model.UnexpectedError, err)
 	}
 
 	if bucket == nil {
-		return nil, apperror.New(model.BucketNotFound, name)
+		return nil, model.Error(model.BucketNotFound, name)
 	}
 
 	normalized, err := normalize(query, bucket.Schema)
@@ -150,11 +149,11 @@ func (s *BucketService) Search(name string, query map[string][]string) ([]string
 		return nil, err
 	}
 
-	return s.repository.FindKeys(bucket, normalized)
+	return bucket.FindKeys(normalized)
 }
 
-func normalize(query map[string][]string, schema []model.Field) (map[string][]any, error) {
-	fieldMap := make(map[string]model.Field)
+func normalize(query map[string][]string, schema []repo.Field) (map[string][]any, error) {
+	fieldMap := make(map[string]repo.Field)
 	for _, field := range schema {
 		fieldMap[field.Name] = field
 	}
@@ -164,23 +163,23 @@ func normalize(query map[string][]string, schema []model.Field) (map[string][]an
 	for name, values := range query {
 		field, found := fieldMap[name]
 		if !found {
-			return nil, apperror.New(model.UnknownField, name)
+			return nil, model.Error(model.UnknownField, name)
 		}
 
 		switch field.Type {
-		case model.StringDataType:
+		case repo.StringDataType:
 			normalized[name] = convertStrings(values)
-		case model.NumberDataType:
+		case repo.NumberDataType:
 			floats, err := convertFloats(values)
 			if err != nil {
-				return nil, apperror.New(model.InvalidField, name)
+				return nil, model.Error(model.InvalidField, name)
 			}
 
 			normalized[name] = floats
-		case model.BoolDataType:
+		case repo.BoolDataType:
 			bools, err := convertBools(values)
 			if err != nil {
-				return nil, apperror.New(model.InvalidField, name)
+				return nil, model.Error(model.InvalidField, name)
 			}
 
 			normalized[name] = bools
@@ -230,8 +229,8 @@ func convertBools(input []string) ([]any, error) {
 	return values, nil
 }
 
-func checkValue(object map[string]any, schema []model.Field) error {
-	fieldMap := make(map[string]model.Field)
+func checkValue(object map[string]any, schema []repo.Field) error {
+	fieldMap := make(map[string]repo.Field)
 	for _, field := range schema {
 		fieldMap[field.Name] = field
 	}
@@ -239,21 +238,21 @@ func checkValue(object map[string]any, schema []model.Field) error {
 	for name, value := range object {
 		field, found := fieldMap[name]
 		if !found {
-			return apperror.New(model.UnknownField, name)
+			return model.Error(model.UnknownField, name)
 		}
 
 		switch field.Type {
-		case model.StringDataType:
+		case repo.StringDataType:
 			if _, ok := value.(string); !ok {
-				return apperror.New(model.InvalidField, name)
+				return model.Error(model.InvalidField, name)
 			}
-		case model.NumberDataType:
+		case repo.NumberDataType:
 			if _, ok := value.(float64); !ok {
-				return apperror.New(model.InvalidField, name)
+				return model.Error(model.InvalidField, name)
 			}
-		case model.BoolDataType:
+		case repo.BoolDataType:
 			if _, ok := value.(bool); !ok {
-				return apperror.New(model.InvalidField, name)
+				return model.Error(model.InvalidField, name)
 			}
 		}
 
@@ -263,7 +262,7 @@ func checkValue(object map[string]any, schema []model.Field) error {
 			}
 
 			if _, found := object[field.Name]; !found {
-				return apperror.New(model.MissingField, field.Name)
+				return model.Error(model.MissingField, field.Name)
 			}
 		}
 	}

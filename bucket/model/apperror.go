@@ -1,23 +1,21 @@
-package apperror
+package model
 
 import (
 	"fmt"
-
-	"github.com/jjmrocha/oblivion/bucket/model"
 )
 
 type AppError struct {
-	ErrorType   model.ErrorType
+	ErrorType   ErrorType
 	Description string
 	Args        []any
 	Reason      error
 }
 
-func New(errorType model.ErrorType, args ...any) error {
-	return WithReason(errorType, nil, args...)
+func Error(errorType ErrorType, args ...any) error {
+	return ErrorWithReason(errorType, nil, args...)
 }
 
-func WithReason(errorType model.ErrorType, reason error, args ...any) error {
+func ErrorWithReason(errorType ErrorType, reason error, args ...any) error {
 	errorDesc := fmt.Sprintf(errorType.Template(), args...)
 	err := AppError{
 		ErrorType:   errorType,

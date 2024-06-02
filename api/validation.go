@@ -4,36 +4,36 @@ import (
 	"regexp"
 
 	"github.com/jjmrocha/oblivion/bucket/model"
-	"github.com/jjmrocha/oblivion/bucket/model/apperror"
+	"github.com/jjmrocha/oblivion/repo"
 )
 
-func checkBucketCreation(name string, schema []model.Field) error {
+func checkBucketCreation(name string, schema []repo.Field) error {
 	if len(name) == 0 {
-		return apperror.New(model.InvalidBucketName)
+		return model.Error(model.InvalidBucketName)
 	}
 
 	if len(schema) == 0 {
-		return apperror.New(model.SchemaMissing)
+		return model.Error(model.SchemaMissing)
 	}
 
 	for _, field := range schema {
 		matched, err := regexp.MatchString("^[a-zA-Z][a-zA-Z0-9]*[a-zA-Z0-9]$", name)
 		if err != nil {
-			return apperror.WithReason(model.UnexpectedError, err)
+			return model.ErrorWithReason(model.UnexpectedError, err)
 		}
 
 		if !matched || len(field.Name) == 0 || len(field.Name) > 30 {
-			return apperror.New(model.InvalidSchema, field.Name)
+			return model.Error(model.InvalidSchema, field.Name)
 		}
 
 		if len(field.Type) == 0 {
-			return apperror.New(model.InvalidSchema, field.Name)
+			return model.Error(model.InvalidSchema, field.Name)
 		}
 
-		if field.Type != model.StringDataType &&
-			field.Type != model.NumberDataType &&
-			field.Type != model.BoolDataType {
-			return apperror.New(model.InvalidSchema, field.Name)
+		if field.Type != repo.StringDataType &&
+			field.Type != repo.NumberDataType &&
+			field.Type != repo.BoolDataType {
+			return model.Error(model.InvalidSchema, field.Name)
 		}
 	}
 

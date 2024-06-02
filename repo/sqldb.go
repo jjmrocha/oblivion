@@ -1,18 +1,17 @@
-package storage
+package repo
 
 import (
 	"database/sql"
 	"log"
 
 	"github.com/jjmrocha/oblivion/bucket/model"
-	"github.com/jjmrocha/oblivion/bucket/model/apperror"
 )
 
-type SQLDBRepo struct {
+type Repo struct {
 	db *sql.DB
 }
 
-func NewSQLDBRepo(driver string, datasource string) *SQLDBRepo {
+func New(driver string, datasource string) *Repo {
 	db, err := sql.Open(driver, datasource)
 	if err != nil {
 		log.Panicf("Error opening db %v using driver %v: %v", datasource, driver, err)
@@ -23,20 +22,20 @@ func NewSQLDBRepo(driver string, datasource string) *SQLDBRepo {
 		log.Panicf("Error creating db catalog on %v using driver %v: %v", datasource, driver, err)
 	}
 
-	repo := SQLDBRepo{
+	repo := Repo{
 		db: db,
 	}
 
 	return &repo
 }
 
-func (r *SQLDBRepo) Close() {
+func (r *Repo) Close() {
 	if err := r.db.Close(); err != nil {
 		log.Printf("Error closing db: %v\n", err)
 	}
 }
 
-func (r *SQLDBRepo) GetAllBuckets() ([]string, error) {
+func (r *Repo) GetAllBuckets() ([]string, error) {
 	stm, err := r.db.Prepare("select bucket_name from oblivion")
 	if err != nil {
 		return nil, err
@@ -63,14 +62,14 @@ func (r *SQLDBRepo) GetAllBuckets() ([]string, error) {
 	return bucketList, nil
 }
 
-func (r *SQLDBRepo) CreateBucket(name string, schema []model.Field) (*model.Bucket, error) {
+func (r *Repo) CreateBucket(name string, schema []Field) (*Bucket, error) {
 	exists, err := bucketExists(r.db, name)
 	if err != nil {
 		return nil, err
 	}
 
 	if exists {
-		return nil, apperror.New(model.BucketAlreadyExits, name)
+		return nil, model.Error(model.BucketAlreadyExits, name)
 	}
 
 	tx, err := r.db.Begin()
@@ -106,7 +105,8 @@ func (r *SQLDBRepo) CreateBucket(name string, schema []model.Field) (*model.Buck
 		return nil, err
 	}
 
-	bucket := model.Bucket{
+	bucket := Bucket{
+		repo:   r,
 		Name:   name,
 		Schema: schema,
 	}
@@ -114,7 +114,7 @@ func (r *SQLDBRepo) CreateBucket(name string, schema []model.Field) (*model.Buck
 	return &bucket, nil
 }
 
-func (r *SQLDBRepo) GetBucket(name string) (*model.Bucket, error) {
+func (r *Repo) GetBucket(name string) (*Bucket, error) {
 	schema, err := readSchema(r.db, name)
 	if err != nil {
 		return nil, err
@@ -124,7 +124,8 @@ func (r *SQLDBRepo) GetBucket(name string) (*model.Bucket, error) {
 		return nil, nil
 	}
 
-	bucket := model.Bucket{
+	bucket := Bucket{
+		repo:   r,
 		Name:   name,
 		Schema: schema,
 	}
@@ -132,14 +133,14 @@ func (r *SQLDBRepo) GetBucket(name string) (*model.Bucket, error) {
 	return &bucket, nil
 }
 
-func (r *SQLDBRepo) DropBucket(name string) error {
+func (r *Repo) DropBucket(name string) error {
 	exists, err := bucketExists(r.db, name)
 	if err != nil {
 		return err
 	}
 
 	if !exists {
-		return apperror.New(model.BucketNotFound, name)
+		return model.Error(model.BucketNotFound, name)
 	}
 
 	tx, err := r.db.Begin()
@@ -166,81 +167,4 @@ func (r *SQLDBRepo) DropBucket(name string) error {
 	}
 
 	return nil
-}
-
-func (r *SQLDBRepo) Store(bucket *model.Bucket, key string, value map[string]any) error {
-	exists, err := keyExists(r.db, bucket, key)
-	if err != nil {
-		return err
-	}
-
-	if exists {
-		return updateValue(r.db, bucket, key, value)
-	}
-
-	return insertValue(r.db, bucket, key, value)
-}
-
-func (r *SQLDBRepo) Read(bucket *model.Bucket, key string) (map[string]any, error) {
-	query := buildFindByKeySql(bucket)
-	stm, err := r.db.Prepare(query)
-	if err != nil {
-		return nil, err
-	}
-
-	defer stm.Close()
-
-	row := stm.QueryRow(key)
-
-	values := valuesForScan(bucket)
-	err = row.Scan(values...)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-
-		return nil, err
-	}
-
-	obj := buildObject(bucket, values)
-	return obj, nil
-}
-
-func (r *SQLDBRepo) Delete(bucket *model.Bucket, key string) error {
-	query := "delete from " + bucket.Name + " where key = ?"
-	stm, err := r.db.Prepare(query)
-	if err != nil {
-		return err
-	}
-
-	_, err = stm.Exec(key)
-	return err
-}
-
-func (r *SQLDBRepo) FindKeys(bucket *model.Bucket, criteria map[string][]any) ([]string, error) {
-	query, values := buildSearchQuery(bucket, criteria)
-	stm, err := r.db.Prepare(query)
-	if err != nil {
-		return nil, err
-	}
-	defer stm.Close()
-
-	rows, err := stm.Query(values...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	keyList := make([]string, 0)
-	var key string
-
-	for rows.Next() {
-		if err = rows.Scan(&key); err != nil {
-			return nil, err
-		}
-
-		keyList = append(keyList, key)
-	}
-
-	return keyList, nil
 }

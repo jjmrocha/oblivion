@@ -6,17 +6,17 @@ import (
 
 	"github.com/jjmrocha/oblivion/api"
 	"github.com/jjmrocha/oblivion/bucket"
-	"github.com/jjmrocha/oblivion/storage"
+	"github.com/jjmrocha/oblivion/repo"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
 	// init
-	repository := storage.NewSQLDBRepo("sqlite3", "./test.db")
-	defer repository.Close()
+	repo := repo.New("sqlite3", "./test.db")
+	defer repo.Close()
 
-	buckectService := bucket.NewBucketService(repository)
+	buckectService := bucket.NewBucketService(repo)
 	api := api.NewApi(buckectService)
 	// setup routing
 	mux := http.NewServeMux()

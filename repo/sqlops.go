@@ -1,11 +1,9 @@
-package storage
+package repo
 
 import (
 	"database/sql"
 	"encoding/json"
 	"strings"
-
-	"github.com/jjmrocha/oblivion/bucket/model"
 )
 
 func createCatalogIfNotExist(db *sql.DB) error {
@@ -19,7 +17,7 @@ func createCatalogIfNotExist(db *sql.DB) error {
 	return err
 }
 
-func readSchema(db *sql.DB, bucket string) ([]model.Field, error) {
+func readSchema(db *sql.DB, bucket string) ([]Field, error) {
 	stm, err := db.Prepare("select schema from oblivion where bucket_name = ?")
 	if err != nil {
 		return nil, err
@@ -37,7 +35,7 @@ func readSchema(db *sql.DB, bucket string) ([]model.Field, error) {
 		return nil, err
 	}
 
-	schema := make([]model.Field, 0)
+	schema := make([]Field, 0)
 	err = json.Unmarshal([]byte(schemaStr), &schema)
 	if err != nil {
 		return nil, err
@@ -46,7 +44,7 @@ func readSchema(db *sql.DB, bucket string) ([]model.Field, error) {
 	return schema, nil
 }
 
-func buildFindByKeySql(bucket *model.Bucket) string {
+func buildFindByKeySql(bucket *Bucket) string {
 	columns := make([]string, 0, len(bucket.Schema))
 	for _, field := range bucket.Schema {
 		columns = append(columns, field.Name)
@@ -58,22 +56,22 @@ func buildFindByKeySql(bucket *model.Bucket) string {
 	return query
 }
 
-func buildObject(bucket *model.Bucket, values []any) map[string]any {
+func buildObject(bucket *Bucket, values []any) map[string]any {
 	obj := make(map[string]any)
 
 	for i, field := range bucket.Schema {
 		switch field.Type {
-		case model.StringDataType:
+		case StringDataType:
 			holder := values[i].(*sql.NullString)
 			if holder.Valid {
 				obj[field.Name] = holder.String
 			}
-		case model.NumberDataType:
+		case NumberDataType:
 			holder := values[i].(*sql.NullFloat64)
 			if holder.Valid {
 				obj[field.Name] = holder.Float64
 			}
-		case model.BoolDataType:
+		case BoolDataType:
 			holder := values[i].(*sql.NullBool)
 			if holder.Valid {
 				obj[field.Name] = holder.Bool
@@ -84,17 +82,17 @@ func buildObject(bucket *model.Bucket, values []any) map[string]any {
 	return obj
 }
 
-func valuesForScan(bucket *model.Bucket) []any {
+func valuesForScan(bucket *Bucket) []any {
 	values := make([]any, len(bucket.Schema))
 	for i, field := range bucket.Schema {
 		switch field.Type {
-		case model.StringDataType:
+		case StringDataType:
 			var holder sql.NullString
 			values[i] = &holder
-		case model.NumberDataType:
+		case NumberDataType:
 			var holder sql.NullFloat64
 			values[i] = &holder
-		case model.BoolDataType:
+		case BoolDataType:
 			var holder sql.NullBool
 			values[i] = &holder
 		}
@@ -102,7 +100,7 @@ func valuesForScan(bucket *model.Bucket) []any {
 	return values
 }
 
-func buildSearchQuery(bucket *model.Bucket, criteria map[string][]any) (string, []any) {
+func buildSearchQuery(bucket *Bucket, criteria map[string][]any) (string, []any) {
 	where := ""
 	values := make([]any, 0, len(criteria))
 
@@ -144,17 +142,17 @@ func bucketExists(db *sql.DB, bucket string) (bool, error) {
 	return exists, nil
 }
 
-func createTable(tx *sql.Tx, tableName string, schema []model.Field) error {
+func createTable(tx *sql.Tx, tableName string, schema []Field) error {
 	query := "create table " + tableName + " (key varchar(50) primary key"
 	for _, field := range schema {
 		query += " , " + field.Name
 
 		switch field.Type {
-		case model.StringDataType:
+		case StringDataType:
 			query += " text"
-		case model.NumberDataType:
+		case NumberDataType:
 			query += " numeric"
-		case model.BoolDataType:
+		case BoolDataType:
 			query += " boolean"
 		}
 
@@ -175,7 +173,7 @@ func dropTable(tx *sql.Tx, tableName string) error {
 	return err
 }
 
-func addBucketToCatalog(tx *sql.Tx, tableName string, schema []model.Field) error {
+func addBucketToCatalog(tx *sql.Tx, tableName string, schema []Field) error {
 	stm, err := tx.Prepare("insert into oblivion (bucket_name, schema) values (?, ?)")
 	if err != nil {
 		return err
@@ -210,7 +208,7 @@ func createIndex(tx *sql.Tx, tableName string, column string) error {
 	return err
 }
 
-func updateValue(db *sql.DB, bucket *model.Bucket, key string, obj map[string]any) error {
+func updateValue(db *sql.DB, bucket *Bucket, key string, obj map[string]any) error {
 	columnList := ""
 	values := make([]any, 0)
 
@@ -245,7 +243,7 @@ func updateValue(db *sql.DB, bucket *model.Bucket, key string, obj map[string]an
 	return err
 }
 
-func insertValue(db *sql.DB, bucket *model.Bucket, key string, obj map[string]any) error {
+func insertValue(db *sql.DB, bucket *Bucket, key string, obj map[string]any) error {
 	columnCount := len(obj)
 
 	columns := make([]string, 0, columnCount)
@@ -273,7 +271,7 @@ func insertValue(db *sql.DB, bucket *model.Bucket, key string, obj map[string]an
 	return err
 }
 
-func keyExists(db *sql.DB, bucket *model.Bucket, key string) (bool, error) {
+func keyExists(db *sql.DB, bucket *Bucket, key string) (bool, error) {
 	query := "select count(*) from " + bucket.Name + " where key = ?"
 	stm, err := db.Prepare(query)
 	if err != nil {

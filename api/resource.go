@@ -2,12 +2,11 @@ package api
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 
 	"github.com/jjmrocha/oblivion/bucket"
 	"github.com/jjmrocha/oblivion/bucket/model"
-	"github.com/jjmrocha/oblivion/bucket/model/apperror"
+	"github.com/jjmrocha/oblivion/repo"
 )
 
 type Api struct {
@@ -23,6 +22,11 @@ func NewApi(bucketService *bucket.BucketService) *Api {
 }
 
 func (api *Api) SetRoutes(mux *http.ServeMux) {
+	setBucketRoutes(mux, api)
+	setKeyRoutes(mux, api)
+}
+
+func setBucketRoutes(mux *http.ServeMux, api *Api) {
 	mux.HandleFunc("GET /v1/buckets", func(w http.ResponseWriter, req *http.Request) {
 		bucketNames, err := api.bucketService.BucketList()
 		if err != nil {
@@ -34,11 +38,11 @@ func (api *Api) SetRoutes(mux *http.ServeMux) {
 	})
 
 	mux.HandleFunc("POST /v1/buckets", func(w http.ResponseWriter, req *http.Request) {
-		var request model.Bucket
+		var request repo.Bucket
 
 		err := json.NewDecoder(req.Body).Decode(&request)
 		if err != nil {
-			writeJSONErrorResponse(w, apperror.New(model.BadRequestPaylod))
+			writeJSONErrorResponse(w, model.Error(model.BadRequestPaylod))
 			return
 		}
 
@@ -80,8 +84,9 @@ func (api *Api) SetRoutes(mux *http.ServeMux) {
 
 		writeJSONResponse(w, http.StatusNoContent, nil)
 	})
+}
 
-	// key operations
+func setKeyRoutes(mux *http.ServeMux, api *Api) {
 	mux.HandleFunc("GET /v1/buckets/{bucket}/keys/{key}", func(w http.ResponseWriter, req *http.Request) {
 		bucketName := req.PathValue("bucket")
 		key := req.PathValue("key")
@@ -100,7 +105,7 @@ func (api *Api) SetRoutes(mux *http.ServeMux) {
 		key := req.PathValue("key")
 
 		if len(key) == 0 || len(key) > 50 {
-			writeJSONErrorResponse(w, apperror.New(model.InvalidKey, key, "0 < key <= 50"))
+			writeJSONErrorResponse(w, model.Error(model.InvalidKey, key, "0 < key <= 50"))
 			return
 		}
 
@@ -108,7 +113,7 @@ func (api *Api) SetRoutes(mux *http.ServeMux) {
 
 		err := json.NewDecoder(req.Body).Decode(&value)
 		if err != nil {
-			writeJSONErrorResponse(w, apperror.New(model.BadRequestPaylod))
+			writeJSONErrorResponse(w, model.Error(model.BadRequestPaylod))
 			return
 		}
 
@@ -146,36 +151,4 @@ func (api *Api) SetRoutes(mux *http.ServeMux) {
 
 		writeJSONResponse(w, http.StatusOK, keys)
 	})
-}
-
-func writeJSONErrorResponse(w http.ResponseWriter, err error) {
-	errorType := model.UnexpectedError
-	reason := err.Error()
-
-	if appErr, ok := err.(*apperror.AppError); ok {
-		errorType = appErr.ErrorType
-		reason = appErr.String()
-	}
-
-	statusCode := errorType.StatusCode()
-	payload := Error{
-		Status:    statusCode,
-		ErrorCode: errorType.ErrorCode(),
-		Reason:    reason,
-	}
-
-	writeJSONResponse(w, statusCode, payload)
-}
-
-func writeJSONResponse(w http.ResponseWriter, status int, payload any) {
-	w.WriteHeader(status)
-
-	if payload != nil {
-		w.Header().Set("Content-Type", "application/json")
-
-		err := json.NewEncoder(w).Encode(payload)
-		if err != nil {
-			log.Printf("Error writing payload %v to response\n", payload)
-		}
-	}
 }
