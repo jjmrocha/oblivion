@@ -36,30 +36,7 @@ func (r *Repo) Close() {
 }
 
 func (r *Repo) GetAllBuckets() ([]string, error) {
-	stm, err := r.db.Prepare("select bucket_name from oblivion")
-	if err != nil {
-		return nil, err
-	}
-	defer stm.Close()
-
-	rows, err := stm.Query()
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	bucketList := make([]string, 0)
-	var bucket string
-
-	for rows.Next() {
-		if err = rows.Scan(&bucket); err != nil {
-			return nil, err
-		}
-
-		bucketList = append(bucketList, bucket)
-	}
-
-	return bucketList, nil
+	return bucketList(r.db)
 }
 
 func (r *Repo) CreateBucket(name string, schema []Field) (*Bucket, error) {

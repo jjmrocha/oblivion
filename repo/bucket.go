@@ -8,21 +8,6 @@ type Bucket struct {
 	Schema []Field `json:"schema"`
 }
 
-type DataType string
-
-const (
-	StringDataType DataType = "string"
-	NumberDataType DataType = "number"
-	BoolDataType   DataType = "bool"
-)
-
-type Field struct {
-	Name     string   `json:"field"`
-	Type     DataType `json:"type"`
-	Required bool     `json:"not-null"`
-	Indexed  bool     `json:"indexed"`
-}
-
 func (b *Bucket) Store(key string, value map[string]any) error {
 	exists, err := keyExists(b.repo.db, b, key)
 	if err != nil {
@@ -47,7 +32,7 @@ func (b *Bucket) Read(key string) (map[string]any, error) {
 
 	row := stm.QueryRow(key)
 
-	values := valuesForScan(b)
+	values := valuesForScan(b.Schema)
 	err = row.Scan(values...)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -57,7 +42,7 @@ func (b *Bucket) Read(key string) (map[string]any, error) {
 		return nil, err
 	}
 
-	obj := buildObject(b, values)
+	obj := buildObject(b.Schema, values)
 	return obj, nil
 }
 

@@ -2,20 +2,8 @@ package repo
 
 import (
 	"database/sql"
-	"encoding/json"
 	"strings"
 )
-
-func createCatalogIfNotExist(db *sql.DB) error {
-	query := `create table if not exists oblivion (
-				bucket_name varchar(30) primary key, 
-				schema text not null
-			)`
-
-	_, err := db.Exec(query)
-
-	return err
-}
 
 func readSchema(db *sql.DB, bucket string) ([]Field, error) {
 	stm, err := db.Prepare("select schema from oblivion where bucket_name = ?")
@@ -35,8 +23,7 @@ func readSchema(db *sql.DB, bucket string) ([]Field, error) {
 		return nil, err
 	}
 
-	schema := make([]Field, 0)
-	err = json.Unmarshal([]byte(schemaStr), &schema)
+	schema, err := unmarshalSchema([]byte(schemaStr))
 	if err != nil {
 		return nil, err
 	}
@@ -56,10 +43,10 @@ func buildFindByKeySql(bucket *Bucket) string {
 	return query
 }
 
-func buildObject(bucket *Bucket, values []any) map[string]any {
+func buildObject(schema []Field, values []any) map[string]any {
 	obj := make(map[string]any)
 
-	for i, field := range bucket.Schema {
+	for i, field := range schema {
 		switch field.Type {
 		case StringDataType:
 			holder := values[i].(*sql.NullString)
@@ -82,9 +69,10 @@ func buildObject(bucket *Bucket, values []any) map[string]any {
 	return obj
 }
 
-func valuesForScan(bucket *Bucket) []any {
-	values := make([]any, len(bucket.Schema))
-	for i, field := range bucket.Schema {
+func valuesForScan(schema []Field) []any {
+	values := make([]any, len(schema))
+
+	for i, field := range schema {
 		switch field.Type {
 		case StringDataType:
 			var holder sql.NullString
@@ -97,6 +85,7 @@ func valuesForScan(bucket *Bucket) []any {
 			values[i] = &holder
 		}
 	}
+
 	return values
 }
 
@@ -170,33 +159,6 @@ func dropTable(tx *sql.Tx, tableName string) error {
 	query := "drop table " + tableName
 
 	_, err := tx.Exec(query)
-	return err
-}
-
-func addBucketToCatalog(tx *sql.Tx, tableName string, schema []Field) error {
-	stm, err := tx.Prepare("insert into oblivion (bucket_name, schema) values (?, ?)")
-	if err != nil {
-		return err
-	}
-	defer stm.Close()
-
-	schemaStr, err := json.Marshal(schema)
-	if err != nil {
-		return err
-	}
-
-	_, err = stm.Exec(tableName, string(schemaStr))
-	return err
-}
-
-func removeBucketFromCatalog(tx *sql.Tx, tableName string) error {
-	stm, err := tx.Prepare("delete from oblivion where bucket_name = ?")
-	if err != nil {
-		return err
-	}
-	defer stm.Close()
-
-	_, err = stm.Exec(tableName)
 	return err
 }
 
