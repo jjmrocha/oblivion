@@ -46,12 +46,6 @@ func setBucketRoutes(mux *http.ServeMux, api *Api) {
 			return
 		}
 
-		err = checkBucketCreation(request.Name, request.Schema)
-		if err != nil {
-			writeJSONErrorResponse(w, err)
-			return
-		}
-
 		bucket, err := api.bucketService.CreateBucket(request.Name, request.Schema)
 		if err != nil {
 			writeJSONErrorResponse(w, err)
@@ -103,11 +97,6 @@ func setKeyRoutes(mux *http.ServeMux, api *Api) {
 	mux.HandleFunc("PUT /v1/buckets/{bucket}/keys/{key}", func(w http.ResponseWriter, req *http.Request) {
 		bucketName := req.PathValue("bucket")
 		key := req.PathValue("key")
-
-		if len(key) == 0 || len(key) > 50 {
-			writeJSONErrorResponse(w, model.Error(model.InvalidKey, key, "0 < key <= 50"))
-			return
-		}
 
 		var value map[string]any
 

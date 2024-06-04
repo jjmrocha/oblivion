@@ -22,7 +22,8 @@ const (
 	// Schema related
 	InvalidBucketName
 	SchemaMissing
-	InvalidSchema
+	InvalidFieldName
+	InvalidFieldType
 	// Gneric
 	UnexpectedError
 )
@@ -47,7 +48,7 @@ var errorTypeDefMap = map[ErrorType]errorTypeDef{
 	},
 	InvalidKey: {
 		statusCode: http.StatusBadRequest,
-		template:   "Invalid key %v: %v",
+		template:   "Invalid key %v",
 	},
 	MissingField: {
 		statusCode: http.StatusUnprocessableEntity,
@@ -63,15 +64,19 @@ var errorTypeDefMap = map[ErrorType]errorTypeDef{
 	},
 	InvalidBucketName: {
 		statusCode: http.StatusBadRequest,
-		template:   "Invalid bucket name",
+		template:   "Invalid bucket name %v",
 	},
 	SchemaMissing: {
 		statusCode: http.StatusBadRequest,
 		template:   "Schema must contain at least one field",
 	},
-	InvalidSchema: {
+	InvalidFieldName: {
 		statusCode: http.StatusBadRequest,
-		template:   "Invalid definition for field %v",
+		template:   "Invalid field name %v",
+	},
+	InvalidFieldType: {
+		statusCode: http.StatusBadRequest,
+		template:   "Invalid field type %v",
 	},
 	BadRequestPaylod: {
 		statusCode: http.StatusBadRequest,

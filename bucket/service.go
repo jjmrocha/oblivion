@@ -1,11 +1,11 @@
 package bucket
 
 import (
-	"regexp"
 	"strconv"
 
 	"github.com/jjmrocha/oblivion/bucket/model"
 	"github.com/jjmrocha/oblivion/repo"
+	"github.com/jjmrocha/oblivion/valid"
 )
 
 type BucketService struct {
@@ -29,13 +29,12 @@ func (s *BucketService) BucketList() ([]string, error) {
 }
 
 func (s *BucketService) CreateBucket(name string, schema []repo.Field) (*repo.Bucket, error) {
-	matched, err := regexp.MatchString("^[a-zA-Z][a-zA-Z_0-9]*[a-zA-Z0-9]$", name)
-	if err != nil {
-		return nil, model.ErrorWithReason(model.UnexpectedError, err)
+	if err := valid.BucketName(name); err != nil {
+		return nil, err
 	}
 
-	if !matched || len(name) > 30 {
-		return nil, model.Error(model.InvalidBucketName, name)
+	if err := valid.Schema(schema); err != nil {
+		return nil, err
 	}
 
 	bucket, err := s.repo.GetBucket(name)
@@ -51,6 +50,10 @@ func (s *BucketService) CreateBucket(name string, schema []repo.Field) (*repo.Bu
 }
 
 func (s *BucketService) GetBucket(name string) (*repo.Bucket, error) {
+	if err := valid.BucketName(name); err != nil {
+		return nil, err
+	}
+
 	bucket, err := s.repo.GetBucket(name)
 
 	if err != nil {
@@ -65,6 +68,10 @@ func (s *BucketService) GetBucket(name string) (*repo.Bucket, error) {
 }
 
 func (s *BucketService) DeleteBucket(name string) error {
+	if err := valid.BucketName(name); err != nil {
+		return err
+	}
+
 	bucket, err := s.repo.GetBucket(name)
 
 	if err != nil {
@@ -79,6 +86,14 @@ func (s *BucketService) DeleteBucket(name string) error {
 }
 
 func (s *BucketService) GetValue(name string, key string) (any, error) {
+	if err := valid.BucketName(name); err != nil {
+		return nil, err
+	}
+
+	if err := valid.Key(key); err != nil {
+		return nil, err
+	}
+
 	bucket, err := s.repo.GetBucket(name)
 	if err != nil {
 		return nil, model.ErrorWithReason(model.UnexpectedError, err)
@@ -101,6 +116,14 @@ func (s *BucketService) GetValue(name string, key string) (any, error) {
 }
 
 func (s *BucketService) PutValue(name string, key string, value map[string]any) error {
+	if err := valid.BucketName(name); err != nil {
+		return err
+	}
+
+	if err := valid.Key(key); err != nil {
+		return err
+	}
+
 	bucket, err := s.repo.GetBucket(name)
 
 	if err != nil {
@@ -120,6 +143,14 @@ func (s *BucketService) PutValue(name string, key string, value map[string]any) 
 }
 
 func (s *BucketService) DeleteValue(name string, key string) error {
+	if err := valid.BucketName(name); err != nil {
+		return err
+	}
+
+	if err := valid.Key(key); err != nil {
+		return err
+	}
+
 	bucket, err := s.repo.GetBucket(name)
 
 	if err != nil {
@@ -134,6 +165,10 @@ func (s *BucketService) DeleteValue(name string, key string) error {
 }
 
 func (s *BucketService) Search(name string, query map[string][]string) ([]string, error) {
+	if err := valid.BucketName(name); err != nil {
+		return nil, err
+	}
+
 	bucket, err := s.repo.GetBucket(name)
 
 	if err != nil {
