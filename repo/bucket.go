@@ -61,7 +61,7 @@ func (b *Bucket) Delete(key string) error {
 	return err
 }
 
-func (b *Bucket) FindKeys(criteria model.Criteria) ([]string, error) {
+func (b *Bucket) Keys(criteria model.Criteria) ([]string, error) {
 	query, values := buildSearchQuery(b, criteria)
 	stm, err := b.repo.db.Prepare(query)
 	if err != nil {

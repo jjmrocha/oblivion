@@ -86,7 +86,7 @@ func setKeyRoutes(mux *http.ServeMux, h *Handler) {
 		bucketName := req.PathValue("bucket")
 		key := req.PathValue("key")
 
-		value, err := h.service.GetValue(bucketName, key)
+		value, err := h.service.Value(bucketName, key)
 		if err != nil {
 			writeErrorResponse(w, err)
 			return
@@ -107,7 +107,7 @@ func setKeyRoutes(mux *http.ServeMux, h *Handler) {
 			return
 		}
 
-		err = h.service.PutValue(bucketName, key, value)
+		err = h.service.SetValue(bucketName, key, value)
 		if err != nil {
 			writeErrorResponse(w, err)
 			return
@@ -133,7 +133,7 @@ func setKeyRoutes(mux *http.ServeMux, h *Handler) {
 		bucketName := req.PathValue("bucket")
 		criteria := req.URL.Query()
 
-		keys, err := h.service.Search(bucketName, criteria)
+		keys, err := h.service.FindKeys(bucketName, criteria)
 		if err != nil {
 			writeErrorResponse(w, err)
 			return

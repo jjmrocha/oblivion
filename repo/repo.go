@@ -36,11 +36,11 @@ func (r *Repo) Close() {
 	}
 }
 
-func (r *Repo) GetAllBuckets() ([]string, error) {
+func (r *Repo) BucketNames() ([]string, error) {
 	return bucketList(r.db)
 }
 
-func (r *Repo) CreateBucket(name string, schema []model.Field) (*Bucket, error) {
+func (r *Repo) NewBucket(name string, schema []model.Field) (*Bucket, error) {
 	exists, err := bucketExists(r.db, name)
 	if err != nil {
 		return nil, err

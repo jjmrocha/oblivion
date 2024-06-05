@@ -21,7 +21,7 @@ func NewService(repo *repo.Repo) *BucketService {
 }
 
 func (s *BucketService) BucketList() ([]string, error) {
-	bucketList, err := s.repo.GetAllBuckets()
+	bucketList, err := s.repo.BucketNames()
 	if err != nil {
 		return nil, apperror.WithCause(apperror.UnexpectedError, err)
 	}
@@ -47,7 +47,7 @@ func (s *BucketService) CreateBucket(name string, schema []model.Field) (*repo.B
 		return nil, apperror.New(apperror.BucketAlreadyExits, name)
 	}
 
-	return s.repo.CreateBucket(name, schema)
+	return s.repo.NewBucket(name, schema)
 }
 
 func (s *BucketService) GetBucket(name string) (*repo.Bucket, error) {
@@ -86,7 +86,7 @@ func (s *BucketService) DeleteBucket(name string) error {
 	return s.repo.DropBucket(name)
 }
 
-func (s *BucketService) GetValue(name string, key string) (model.Object, error) {
+func (s *BucketService) Value(name string, key string) (model.Object, error) {
 	if err := valid.BucketName(name); err != nil {
 		return nil, err
 	}
@@ -116,7 +116,7 @@ func (s *BucketService) GetValue(name string, key string) (model.Object, error) 
 	return object, nil
 }
 
-func (s *BucketService) PutValue(name string, key string, value model.Object) error {
+func (s *BucketService) SetValue(name string, key string, value model.Object) error {
 	if err := valid.BucketName(name); err != nil {
 		return err
 	}
@@ -165,7 +165,7 @@ func (s *BucketService) DeleteValue(name string, key string) error {
 	return bucket.Delete(key)
 }
 
-func (s *BucketService) Search(name string, criteria url.Values) ([]string, error) {
+func (s *BucketService) FindKeys(name string, criteria url.Values) ([]string, error) {
 	if err := valid.BucketName(name); err != nil {
 		return nil, err
 	}
@@ -189,5 +189,5 @@ func (s *BucketService) Search(name string, criteria url.Values) ([]string, erro
 		return nil, err
 	}
 
-	return bucket.FindKeys(normalized)
+	return bucket.Keys(normalized)
 }
