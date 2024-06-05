@@ -1,4 +1,4 @@
-package model
+package apperror
 
 import (
 	"net/http"

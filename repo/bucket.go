@@ -1,16 +1,18 @@
 package repo
 
-import "database/sql"
+import (
+	"database/sql"
+
+	"github.com/jjmrocha/oblivion/model"
+)
 
 type Bucket struct {
 	repo   *Repo
-	Name   string  `json:"name"`
-	Schema []Field `json:"schema"`
+	Name   string        `json:"name"`
+	Schema []model.Field `json:"schema"`
 }
 
-type Object map[string]any
-
-func (b *Bucket) Store(key string, value Object) error {
+func (b *Bucket) Store(key string, value model.Object) error {
 	exists, err := keyExists(b.repo.db, b, key)
 	if err != nil {
 		return err
@@ -23,7 +25,7 @@ func (b *Bucket) Store(key string, value Object) error {
 	return insertValue(b.repo.db, b, key, value)
 }
 
-func (b *Bucket) Read(key string) (Object, error) {
+func (b *Bucket) Read(key string) (model.Object, error) {
 	query := buildFindByKeySql(b)
 	stm, err := b.repo.db.Prepare(query)
 	if err != nil {
@@ -59,7 +61,7 @@ func (b *Bucket) Delete(key string) error {
 	return err
 }
 
-func (b *Bucket) FindKeys(criteria map[string][]any) ([]string, error) {
+func (b *Bucket) FindKeys(criteria model.Criteria) ([]string, error) {
 	query, values := buildSearchQuery(b, criteria)
 	stm, err := b.repo.db.Prepare(query)
 	if err != nil {

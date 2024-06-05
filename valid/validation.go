@@ -1,10 +1,11 @@
 package valid
 
 import (
+	"net/url"
 	"regexp"
 
-	"github.com/jjmrocha/oblivion/bucket/model"
-	"github.com/jjmrocha/oblivion/repo"
+	"github.com/jjmrocha/oblivion/apperror"
+	"github.com/jjmrocha/oblivion/model"
 )
 
 const (
@@ -21,13 +22,13 @@ var (
 
 func BucketName(name string) error {
 	if len(name) == 0 || len(name) > 30 {
-		return model.Error(model.InvalidBucketName, name)
+		return apperror.Error(apperror.InvalidBucketName, name)
 	}
 
 	matched := bucketNameRegExp.MatchString(name)
 
 	if !matched {
-		return model.Error(model.InvalidBucketName, name)
+		return apperror.Error(apperror.InvalidBucketName, name)
 	}
 
 	return nil
@@ -35,35 +36,35 @@ func BucketName(name string) error {
 
 func FieldName(name string) error {
 	if len(name) == 0 || len(name) > 30 {
-		return model.Error(model.InvalidFieldName, name)
+		return apperror.Error(apperror.InvalidFieldName, name)
 	}
 
 	matched := fieldNameRegExp.MatchString(name)
 
 	if !matched {
-		return model.Error(model.InvalidFieldName, name)
+		return apperror.Error(apperror.InvalidFieldName, name)
 	}
 
 	return nil
 }
 
-func DataType(dataType repo.DataType) error {
+func DataType(dataType model.DataType) error {
 	if len(dataType) == 0 {
-		return model.Error(model.InvalidFieldType, dataType)
+		return apperror.Error(apperror.InvalidFieldType, dataType)
 	}
 
-	if dataType != repo.StringDataType &&
-		dataType != repo.NumberDataType &&
-		dataType != repo.BoolDataType {
-		return model.Error(model.InvalidFieldType, dataType)
+	if dataType != model.StringDataType &&
+		dataType != model.NumberDataType &&
+		dataType != model.BoolDataType {
+		return apperror.Error(apperror.InvalidFieldType, dataType)
 	}
 
 	return nil
 }
 
-func Schema(schema []repo.Field) error {
+func Schema(schema []model.Field) error {
 	if len(schema) == 0 {
-		return model.Error(model.SchemaMissing)
+		return apperror.Error(apperror.SchemaMissing)
 	}
 
 	for _, field := range schema {
@@ -81,32 +82,29 @@ func Schema(schema []repo.Field) error {
 
 func Key(value string) error {
 	if len(value) == 0 || len(value) > 50 {
-		return model.Error(model.InvalidKey, value)
+		return apperror.Error(apperror.InvalidKey, value)
 	}
 
 	matched := keyRegExp.MatchString(value)
 
 	if !matched {
-		return model.Error(model.InvalidKey, value)
+		return apperror.Error(apperror.InvalidKey, value)
 	}
 
 	return nil
 }
 
-func Object(obj repo.Object, schema []repo.Field) error {
-	fieldMap := make(map[string]repo.Field)
-	for _, field := range schema {
-		fieldMap[field.Name] = field
-	}
+func Object(obj model.Object, schema []model.Field) error {
+	fieldMap := toFieldMap(schema)
 
 	for name, value := range obj {
 		field, found := fieldMap[name]
 		if !found {
-			return model.Error(model.UnknownField, name)
+			return apperror.Error(apperror.UnknownField, name)
 		}
 
 		if !MatchesDataType(value, field.Type) {
-			return model.Error(model.InvalidField, name)
+			return apperror.Error(apperror.InvalidField, name)
 		}
 	}
 
@@ -116,25 +114,46 @@ func Object(obj repo.Object, schema []repo.Field) error {
 		}
 
 		if _, found := obj[field.Name]; !found {
-			return model.Error(model.MissingField, field.Name)
+			return apperror.Error(apperror.MissingField, field.Name)
 		}
 	}
 
 	return nil
 }
 
-func MatchesDataType(value any, dataType repo.DataType) bool {
+func MatchesDataType(value any, dataType model.DataType) bool {
 	switch dataType {
-	case repo.StringDataType:
+	case model.StringDataType:
 		_, ok := value.(string)
 		return ok
-	case repo.NumberDataType:
+	case model.NumberDataType:
 		_, ok := value.(float64)
 		return ok
-	case repo.BoolDataType:
+	case model.BoolDataType:
 		_, ok := value.(bool)
 		return ok
 	}
 
 	return false
+}
+
+func Criteria(criteria url.Values, schema []model.Field) error {
+	fieldMap := toFieldMap(schema)
+
+	for name := range criteria {
+		if _, found := fieldMap[name]; !found {
+			return apperror.Error(apperror.UnknownField, name)
+		}
+	}
+
+	return nil
+}
+
+func toFieldMap(schema []model.Field) map[string]model.Field {
+	fieldMap := make(map[string]model.Field)
+	for _, field := range schema {
+		fieldMap[field.Name] = field
+	}
+
+	return fieldMap
 }

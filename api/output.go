@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/jjmrocha/oblivion/bucket/model"
+	"github.com/jjmrocha/oblivion/apperror"
 )
 
 type errorMsg struct {
@@ -15,10 +15,10 @@ type errorMsg struct {
 }
 
 func writeJSONErrorResponse(w http.ResponseWriter, err error) {
-	errorType := model.UnexpectedError
+	errorType := apperror.UnexpectedError
 	reason := err.Error()
 
-	if appErr, ok := err.(*model.AppError); ok {
+	if appErr, ok := err.(*apperror.AppError); ok {
 		errorType = appErr.ErrorType
 		reason = appErr.String()
 	}

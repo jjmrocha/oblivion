@@ -4,7 +4,8 @@ import (
 	"database/sql"
 	"log"
 
-	"github.com/jjmrocha/oblivion/bucket/model"
+	"github.com/jjmrocha/oblivion/apperror"
+	"github.com/jjmrocha/oblivion/model"
 )
 
 type Repo struct {
@@ -39,14 +40,14 @@ func (r *Repo) GetAllBuckets() ([]string, error) {
 	return bucketList(r.db)
 }
 
-func (r *Repo) CreateBucket(name string, schema []Field) (*Bucket, error) {
+func (r *Repo) CreateBucket(name string, schema []model.Field) (*Bucket, error) {
 	exists, err := bucketExists(r.db, name)
 	if err != nil {
 		return nil, err
 	}
 
 	if exists {
-		return nil, model.Error(model.BucketAlreadyExits, name)
+		return nil, apperror.Error(apperror.BucketAlreadyExits, name)
 	}
 
 	tx, err := r.db.Begin()
@@ -117,7 +118,7 @@ func (r *Repo) DropBucket(name string) error {
 	}
 
 	if !exists {
-		return model.Error(model.BucketNotFound, name)
+		return apperror.Error(apperror.BucketNotFound, name)
 	}
 
 	tx, err := r.db.Begin()

@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/jjmrocha/oblivion/apperror"
 	"github.com/jjmrocha/oblivion/bucket"
-	"github.com/jjmrocha/oblivion/bucket/model"
+	"github.com/jjmrocha/oblivion/model"
 	"github.com/jjmrocha/oblivion/repo"
 )
 
@@ -42,7 +43,7 @@ func setBucketRoutes(mux *http.ServeMux, api *Api) {
 
 		err := json.NewDecoder(req.Body).Decode(&request)
 		if err != nil {
-			writeJSONErrorResponse(w, model.Error(model.BadRequestPaylod))
+			writeJSONErrorResponse(w, apperror.Error(apperror.BadRequestPaylod))
 			return
 		}
 
@@ -98,11 +99,11 @@ func setKeyRoutes(mux *http.ServeMux, api *Api) {
 		bucketName := req.PathValue("bucket")
 		key := req.PathValue("key")
 
-		var value repo.Object
+		var value model.Object
 
 		err := json.NewDecoder(req.Body).Decode(&value)
 		if err != nil {
-			writeJSONErrorResponse(w, model.Error(model.BadRequestPaylod))
+			writeJSONErrorResponse(w, apperror.Error(apperror.BadRequestPaylod))
 			return
 		}
 
@@ -130,9 +131,9 @@ func setKeyRoutes(mux *http.ServeMux, api *Api) {
 
 	mux.HandleFunc("GET /v1/buckets/{bucket}/keys", func(w http.ResponseWriter, req *http.Request) {
 		bucketName := req.PathValue("bucket")
-		query := req.URL.Query()
+		criteria := req.URL.Query()
 
-		keys, err := api.bucketService.Search(bucketName, query)
+		keys, err := api.bucketService.Search(bucketName, criteria)
 		if err != nil {
 			writeJSONErrorResponse(w, err)
 			return

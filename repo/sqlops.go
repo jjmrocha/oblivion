@@ -3,9 +3,11 @@ package repo
 import (
 	"database/sql"
 	"strings"
+
+	"github.com/jjmrocha/oblivion/model"
 )
 
-func readSchema(db *sql.DB, bucket string) ([]Field, error) {
+func readSchema(db *sql.DB, bucket string) ([]model.Field, error) {
 	stm, err := db.Prepare("select schema from oblivion where bucket_name = ?")
 	if err != nil {
 		return nil, err
@@ -43,22 +45,22 @@ func buildFindByKeySql(bucket *Bucket) string {
 	return query
 }
 
-func buildObject(schema []Field, values []any) map[string]any {
-	obj := make(map[string]any)
+func buildObject(schema []model.Field, values []any) model.Object {
+	obj := make(model.Object)
 
 	for i, field := range schema {
 		switch field.Type {
-		case StringDataType:
+		case model.StringDataType:
 			holder := values[i].(*sql.NullString)
 			if holder.Valid {
 				obj[field.Name] = holder.String
 			}
-		case NumberDataType:
+		case model.NumberDataType:
 			holder := values[i].(*sql.NullFloat64)
 			if holder.Valid {
 				obj[field.Name] = holder.Float64
 			}
-		case BoolDataType:
+		case model.BoolDataType:
 			holder := values[i].(*sql.NullBool)
 			if holder.Valid {
 				obj[field.Name] = holder.Bool
@@ -69,18 +71,18 @@ func buildObject(schema []Field, values []any) map[string]any {
 	return obj
 }
 
-func valuesForScan(schema []Field) []any {
+func valuesForScan(schema []model.Field) []any {
 	values := make([]any, len(schema))
 
 	for i, field := range schema {
 		switch field.Type {
-		case StringDataType:
+		case model.StringDataType:
 			var holder sql.NullString
 			values[i] = &holder
-		case NumberDataType:
+		case model.NumberDataType:
 			var holder sql.NullFloat64
 			values[i] = &holder
-		case BoolDataType:
+		case model.BoolDataType:
 			var holder sql.NullBool
 			values[i] = &holder
 		}
@@ -89,7 +91,7 @@ func valuesForScan(schema []Field) []any {
 	return values
 }
 
-func buildSearchQuery(bucket *Bucket, criteria map[string][]any) (string, []any) {
+func buildSearchQuery(bucket *Bucket, criteria model.Criteria) (string, []any) {
 	where := ""
 	values := make([]any, 0, len(criteria))
 
@@ -131,17 +133,17 @@ func bucketExists(db *sql.DB, bucket string) (bool, error) {
 	return exists, nil
 }
 
-func createTable(tx *sql.Tx, tableName string, schema []Field) error {
+func createTable(tx *sql.Tx, tableName string, schema []model.Field) error {
 	query := "create table " + tableName + " (key varchar(50) primary key"
 	for _, field := range schema {
 		query += " , " + field.Name
 
 		switch field.Type {
-		case StringDataType:
+		case model.StringDataType:
 			query += " text"
-		case NumberDataType:
+		case model.NumberDataType:
 			query += " numeric"
-		case BoolDataType:
+		case model.BoolDataType:
 			query += " boolean"
 		}
 
@@ -170,7 +172,7 @@ func createIndex(tx *sql.Tx, tableName string, column string) error {
 	return err
 }
 
-func updateValue(db *sql.DB, bucket *Bucket, key string, obj Object) error {
+func updateValue(db *sql.DB, bucket *Bucket, key string, obj model.Object) error {
 	columnList := ""
 	values := make([]any, 0)
 
@@ -205,7 +207,7 @@ func updateValue(db *sql.DB, bucket *Bucket, key string, obj Object) error {
 	return err
 }
 
-func insertValue(db *sql.DB, bucket *Bucket, key string, obj Object) error {
+func insertValue(db *sql.DB, bucket *Bucket, key string, obj model.Object) error {
 	columnCount := len(obj)
 
 	columns := make([]string, 0, columnCount)

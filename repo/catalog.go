@@ -1,6 +1,10 @@
 package repo
 
-import "database/sql"
+import (
+	"database/sql"
+
+	"github.com/jjmrocha/oblivion/model"
+)
 
 func createCatalogIfNotExist(db *sql.DB) error {
 	query := `create table if not exists oblivion (
@@ -13,7 +17,7 @@ func createCatalogIfNotExist(db *sql.DB) error {
 	return err
 }
 
-func addBucketToCatalog(tx *sql.Tx, bucket string, schema []Field) error {
+func addBucketToCatalog(tx *sql.Tx, bucket string, schema []model.Field) error {
 	stm, err := tx.Prepare("insert into oblivion (bucket_name, schema) values (?, ?)")
 	if err != nil {
 		return err
