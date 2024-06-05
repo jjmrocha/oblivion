@@ -103,7 +103,7 @@ func Object(obj model.Object, schema []model.Field) error {
 			return apperror.New(apperror.UnknownField, name)
 		}
 
-		if !MatchesDataType(value, field.Type) {
+		if !field.Type.ValidValue(value) {
 			return apperror.New(apperror.InvalidField, name)
 		}
 	}
@@ -119,22 +119,6 @@ func Object(obj model.Object, schema []model.Field) error {
 	}
 
 	return nil
-}
-
-func MatchesDataType(value any, dataType model.DataType) bool {
-	switch dataType {
-	case model.StringDataType:
-		_, ok := value.(string)
-		return ok
-	case model.NumberDataType:
-		_, ok := value.(float64)
-		return ok
-	case model.BoolDataType:
-		_, ok := value.(bool)
-		return ok
-	}
-
-	return false
 }
 
 func Criteria(criteria url.Values, schema []model.Field) error {

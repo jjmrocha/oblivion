@@ -13,7 +13,7 @@ type BucketService struct {
 	repo *repo.Repo
 }
 
-func NewBucketService(repo *repo.Repo) *BucketService {
+func NewService(repo *repo.Repo) *BucketService {
 	service := BucketService{
 		repo: repo,
 	}

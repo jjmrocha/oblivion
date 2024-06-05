@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-type AppError struct {
+type Error struct {
 	ErrorType   ErrorType
 	Description string
 	Args        []any
@@ -17,7 +17,7 @@ func New(errorType ErrorType, args ...any) error {
 
 func WithCause(errorType ErrorType, cause error, args ...any) error {
 	errorDesc := fmt.Sprintf(errorType.Template(), args...)
-	err := AppError{
+	err := Error{
 		ErrorType:   errorType,
 		Cause:       cause,
 		Description: errorDesc,
@@ -26,10 +26,10 @@ func WithCause(errorType ErrorType, cause error, args ...any) error {
 	return &err
 }
 
-func (e *AppError) String() string {
+func (e *Error) String() string {
 	return e.Description
 }
 
-func (e *AppError) Error() string {
+func (e *Error) Error() string {
 	return fmt.Sprintf("%v: %v", e.ErrorType, e.Description)
 }

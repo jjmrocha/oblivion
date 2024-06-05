@@ -16,11 +16,11 @@ func main() {
 	repo := repo.New("sqlite3", "./test.db")
 	defer repo.Close()
 
-	buckectService := bucket.NewBucketService(repo)
-	api := api.NewApi(buckectService)
+	buckectService := bucket.NewService(repo)
+	handler := api.NewHandler(buckectService)
 	// setup routing
 	mux := http.NewServeMux()
-	api.SetRoutes(mux)
+	handler.SetRoutes(mux)
 	// start
 	log.Println("Server running")
 	log.Fatal(http.ListenAndServe(":9090", mux))

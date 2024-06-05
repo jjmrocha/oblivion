@@ -14,11 +14,11 @@ type errorMsg struct {
 	Reason    string `json:"description"`
 }
 
-func writeJSONErrorResponse(w http.ResponseWriter, err error) {
+func writeErrorResponse(w http.ResponseWriter, err error) {
 	errorType := apperror.UnexpectedError
 	reason := err.Error()
 
-	if appErr, ok := err.(*apperror.AppError); ok {
+	if appErr, ok := err.(*apperror.Error); ok {
 		errorType = appErr.ErrorType
 		reason = appErr.String()
 	}
@@ -30,10 +30,10 @@ func writeJSONErrorResponse(w http.ResponseWriter, err error) {
 		Reason:    reason,
 	}
 
-	writeJSONResponse(w, statusCode, payload)
+	writeResponse(w, statusCode, payload)
 }
 
-func writeJSONResponse(w http.ResponseWriter, status int, payload any) {
+func writeResponse(w http.ResponseWriter, status int, payload any) {
 	w.WriteHeader(status)
 
 	if payload != nil {

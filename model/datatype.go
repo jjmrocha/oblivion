@@ -30,3 +30,19 @@ func (d DataType) Convert(value string) (any, error) {
 
 	return value, nil
 }
+
+func (d DataType) ValidValue(value any) bool {
+	switch d {
+	case StringDataType:
+		_, ok := value.(string)
+		return ok
+	case NumberDataType:
+		_, ok := value.(float64)
+		return ok
+	case BoolDataType:
+		_, ok := value.(bool)
+		return ok
+	}
+
+	return false
+}
