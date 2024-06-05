@@ -43,7 +43,7 @@ func setBucketRoutes(mux *http.ServeMux, api *Api) {
 
 		err := json.NewDecoder(req.Body).Decode(&request)
 		if err != nil {
-			writeJSONErrorResponse(w, apperror.Error(apperror.BadRequestPaylod))
+			writeJSONErrorResponse(w, apperror.New(apperror.BadRequestPaylod))
 			return
 		}
 
@@ -103,7 +103,7 @@ func setKeyRoutes(mux *http.ServeMux, api *Api) {
 
 		err := json.NewDecoder(req.Body).Decode(&value)
 		if err != nil {
-			writeJSONErrorResponse(w, apperror.Error(apperror.BadRequestPaylod))
+			writeJSONErrorResponse(w, apperror.New(apperror.BadRequestPaylod))
 			return
 		}
 

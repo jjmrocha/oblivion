@@ -47,7 +47,7 @@ func (r *Repo) CreateBucket(name string, schema []model.Field) (*Bucket, error) 
 	}
 
 	if exists {
-		return nil, apperror.Error(apperror.BucketAlreadyExits, name)
+		return nil, apperror.New(apperror.BucketAlreadyExits, name)
 	}
 
 	tx, err := r.db.Begin()
@@ -118,7 +118,7 @@ func (r *Repo) DropBucket(name string) error {
 	}
 
 	if !exists {
-		return apperror.Error(apperror.BucketNotFound, name)
+		return apperror.New(apperror.BucketNotFound, name)
 	}
 
 	tx, err := r.db.Begin()

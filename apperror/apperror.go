@@ -8,18 +8,18 @@ type AppError struct {
 	ErrorType   ErrorType
 	Description string
 	Args        []any
-	Reason      error
+	Cause       error
 }
 
-func Error(errorType ErrorType, args ...any) error {
-	return ErrorWithReason(errorType, nil, args...)
+func New(errorType ErrorType, args ...any) error {
+	return WithCause(errorType, nil, args...)
 }
 
-func ErrorWithReason(errorType ErrorType, reason error, args ...any) error {
+func WithCause(errorType ErrorType, cause error, args ...any) error {
 	errorDesc := fmt.Sprintf(errorType.Template(), args...)
 	err := AppError{
 		ErrorType:   errorType,
-		Reason:      reason,
+		Cause:       cause,
 		Description: errorDesc,
 		Args:        args,
 	}

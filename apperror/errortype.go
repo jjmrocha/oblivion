@@ -28,12 +28,12 @@ const (
 	UnexpectedError
 )
 
-type errorTypeDef struct {
+type details struct {
 	statusCode int
 	template   string
 }
 
-var errorTypeDefMap = map[ErrorType]errorTypeDef{
+var errorTypeMap = map[ErrorType]details{
 	BucketAlreadyExits: {
 		statusCode: http.StatusConflict,
 		template:   "Bucket %v already exists",
@@ -93,9 +93,9 @@ func (t ErrorType) ErrorCode() int {
 }
 
 func (t ErrorType) StatusCode() int {
-	return errorTypeDefMap[t].statusCode
+	return errorTypeMap[t].statusCode
 }
 
 func (t ErrorType) Template() string {
-	return errorTypeDefMap[t].template
+	return errorTypeMap[t].template
 }
