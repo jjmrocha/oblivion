@@ -170,7 +170,7 @@ func createIndex(tx *sql.Tx, tableName string, column string) error {
 	return err
 }
 
-func updateValue(db *sql.DB, bucket *Bucket, key string, obj map[string]any) error {
+func updateValue(db *sql.DB, bucket *Bucket, key string, obj Object) error {
 	columnList := ""
 	values := make([]any, 0)
 
@@ -205,7 +205,7 @@ func updateValue(db *sql.DB, bucket *Bucket, key string, obj map[string]any) err
 	return err
 }
 
-func insertValue(db *sql.DB, bucket *Bucket, key string, obj map[string]any) error {
+func insertValue(db *sql.DB, bucket *Bucket, key string, obj Object) error {
 	columnCount := len(obj)
 
 	columns := make([]string, 0, columnCount)

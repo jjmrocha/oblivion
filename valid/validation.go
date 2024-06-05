@@ -47,7 +47,7 @@ func FieldName(name string) error {
 	return nil
 }
 
-func FieldDataType(dataType repo.DataType) error {
+func DataType(dataType repo.DataType) error {
 	if len(dataType) == 0 {
 		return model.Error(model.InvalidFieldType, dataType)
 	}
@@ -71,7 +71,7 @@ func Schema(schema []repo.Field) error {
 			return err
 		}
 
-		if err := FieldDataType(field.Type); err != nil {
+		if err := DataType(field.Type); err != nil {
 			return err
 		}
 	}
@@ -91,4 +91,50 @@ func Key(value string) error {
 	}
 
 	return nil
+}
+
+func Object(obj repo.Object, schema []repo.Field) error {
+	fieldMap := make(map[string]repo.Field)
+	for _, field := range schema {
+		fieldMap[field.Name] = field
+	}
+
+	for name, value := range obj {
+		field, found := fieldMap[name]
+		if !found {
+			return model.Error(model.UnknownField, name)
+		}
+
+		if !MatchesDataType(value, field.Type) {
+			return model.Error(model.InvalidField, name)
+		}
+	}
+
+	for _, field := range schema {
+		if !field.Required {
+			continue
+		}
+
+		if _, found := obj[field.Name]; !found {
+			return model.Error(model.MissingField, field.Name)
+		}
+	}
+
+	return nil
+}
+
+func MatchesDataType(value any, dataType repo.DataType) bool {
+	switch dataType {
+	case repo.StringDataType:
+		_, ok := value.(string)
+		return ok
+	case repo.NumberDataType:
+		_, ok := value.(float64)
+		return ok
+	case repo.BoolDataType:
+		_, ok := value.(bool)
+		return ok
+	}
+
+	return false
 }

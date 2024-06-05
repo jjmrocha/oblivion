@@ -98,7 +98,7 @@ func setKeyRoutes(mux *http.ServeMux, api *Api) {
 		bucketName := req.PathValue("bucket")
 		key := req.PathValue("key")
 
-		var value map[string]any
+		var value repo.Object
 
 		err := json.NewDecoder(req.Body).Decode(&value)
 		if err != nil {

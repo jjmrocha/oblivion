@@ -8,7 +8,9 @@ type Bucket struct {
 	Schema []Field `json:"schema"`
 }
 
-func (b *Bucket) Store(key string, value map[string]any) error {
+type Object map[string]any
+
+func (b *Bucket) Store(key string, value Object) error {
 	exists, err := keyExists(b.repo.db, b, key)
 	if err != nil {
 		return err
@@ -21,7 +23,7 @@ func (b *Bucket) Store(key string, value map[string]any) error {
 	return insertValue(b.repo.db, b, key, value)
 }
 
-func (b *Bucket) Read(key string) (map[string]any, error) {
+func (b *Bucket) Read(key string) (Object, error) {
 	query := buildFindByKeySql(b)
 	stm, err := b.repo.db.Prepare(query)
 	if err != nil {

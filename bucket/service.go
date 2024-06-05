@@ -85,7 +85,7 @@ func (s *BucketService) DeleteBucket(name string) error {
 	return s.repo.DropBucket(name)
 }
 
-func (s *BucketService) GetValue(name string, key string) (any, error) {
+func (s *BucketService) GetValue(name string, key string) (repo.Object, error) {
 	if err := valid.BucketName(name); err != nil {
 		return nil, err
 	}
@@ -115,7 +115,7 @@ func (s *BucketService) GetValue(name string, key string) (any, error) {
 	return object, nil
 }
 
-func (s *BucketService) PutValue(name string, key string, value map[string]any) error {
+func (s *BucketService) PutValue(name string, key string, value repo.Object) error {
 	if err := valid.BucketName(name); err != nil {
 		return err
 	}
@@ -134,7 +134,7 @@ func (s *BucketService) PutValue(name string, key string, value map[string]any) 
 		return model.Error(model.BucketNotFound, name)
 	}
 
-	err = checkValue(value, bucket.Schema)
+	err = valid.Object(value, bucket.Schema)
 	if err != nil {
 		return err
 	}
@@ -262,45 +262,4 @@ func convertBools(input []string) ([]any, error) {
 	}
 
 	return values, nil
-}
-
-func checkValue(object map[string]any, schema []repo.Field) error {
-	fieldMap := make(map[string]repo.Field)
-	for _, field := range schema {
-		fieldMap[field.Name] = field
-	}
-
-	for name, value := range object {
-		field, found := fieldMap[name]
-		if !found {
-			return model.Error(model.UnknownField, name)
-		}
-
-		switch field.Type {
-		case repo.StringDataType:
-			if _, ok := value.(string); !ok {
-				return model.Error(model.InvalidField, name)
-			}
-		case repo.NumberDataType:
-			if _, ok := value.(float64); !ok {
-				return model.Error(model.InvalidField, name)
-			}
-		case repo.BoolDataType:
-			if _, ok := value.(bool); !ok {
-				return model.Error(model.InvalidField, name)
-			}
-		}
-
-		for _, field := range schema {
-			if !field.Required {
-				continue
-			}
-
-			if _, found := object[field.Name]; !found {
-				return model.Error(model.MissingField, field.Name)
-			}
-		}
-	}
-
-	return nil
 }
