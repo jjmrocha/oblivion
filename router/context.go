@@ -2,6 +2,11 @@ package router
 
 import "net/http"
 
+type response struct {
+	status  int
+	payload any
+}
+
 type Context struct {
 	Writer   http.ResponseWriter
 	Request  *http.Request
