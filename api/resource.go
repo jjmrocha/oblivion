@@ -2,12 +2,12 @@ package api
 
 import (
 	"encoding/json"
-	"net/http"
 
 	"github.com/jjmrocha/oblivion/apperror"
 	"github.com/jjmrocha/oblivion/bucket"
 	"github.com/jjmrocha/oblivion/model"
 	"github.com/jjmrocha/oblivion/repo"
+	"github.com/jjmrocha/oblivion/router"
 )
 
 type Handler struct {
@@ -22,123 +22,113 @@ func NewHandler(bucketService *bucket.BucketService) *Handler {
 	return &api
 }
 
-func (h *Handler) SetRoutes(mux *http.ServeMux) {
+func (h *Handler) SetRoutes(mux *router.Router) {
 	setBucketRoutes(mux, h)
 	setKeyRoutes(mux, h)
 }
 
-func setBucketRoutes(mux *http.ServeMux, h *Handler) {
-	mux.HandleFunc("GET /v1/buckets", func(w http.ResponseWriter, req *http.Request) {
+func setBucketRoutes(mux *router.Router, h *Handler) {
+	mux.GET("/v1/buckets", func(ctx *router.Context) error {
 		bucketNames, err := h.service.BucketList()
 		if err != nil {
-			writeErrorResponse(w, err)
-			return
+			return err
 		}
 
-		writeResponse(w, http.StatusCreated, bucketNames)
+		return ctx.OK(bucketNames)
 	})
 
-	mux.HandleFunc("POST /v1/buckets", func(w http.ResponseWriter, req *http.Request) {
+	mux.POST("/v1/buckets", func(ctx *router.Context) error {
 		var request repo.Bucket
 
-		err := json.NewDecoder(req.Body).Decode(&request)
+		err := json.NewDecoder(ctx.Request.Body).Decode(&request)
 		if err != nil {
-			writeErrorResponse(w, apperror.New(apperror.BadRequestPaylod))
-			return
+			return apperror.New(apperror.BadRequestPaylod)
 		}
 
 		bucket, err := h.service.CreateBucket(request.Name, request.Schema)
 		if err != nil {
-			writeErrorResponse(w, err)
-			return
+			return err
 		}
 
-		writeResponse(w, http.StatusCreated, &bucket)
+		return ctx.Created(bucket)
 	})
 
-	mux.HandleFunc("GET /v1/buckets/{bucket}", func(w http.ResponseWriter, req *http.Request) {
-		bucketName := req.PathValue("bucket")
+	mux.GET("/v1/buckets/{bucket}", func(ctx *router.Context) error {
+		bucketName := ctx.Request.PathValue("bucket")
 
 		bucket, err := h.service.GetBucket(bucketName)
 		if err != nil {
-			writeErrorResponse(w, err)
-			return
+			return err
 		}
 
-		writeResponse(w, http.StatusOK, &bucket)
+		return ctx.OK(bucket)
 	})
 
-	mux.HandleFunc("DELETE /v1/buckets/{bucket}", func(w http.ResponseWriter, req *http.Request) {
-		bucketName := req.PathValue("bucket")
+	mux.DELETE("/v1/buckets/{bucket}", func(ctx *router.Context) error {
+		bucketName := ctx.Request.PathValue("bucket")
 
 		err := h.service.DeleteBucket(bucketName)
 		if err != nil {
-			writeErrorResponse(w, err)
-			return
+			return err
 		}
 
-		writeResponse(w, http.StatusNoContent, nil)
+		return ctx.NoContent()
 	})
 }
 
-func setKeyRoutes(mux *http.ServeMux, h *Handler) {
-	mux.HandleFunc("GET /v1/buckets/{bucket}/keys/{key}", func(w http.ResponseWriter, req *http.Request) {
-		bucketName := req.PathValue("bucket")
-		key := req.PathValue("key")
+func setKeyRoutes(mux *router.Router, h *Handler) {
+	mux.GET("/v1/buckets/{bucket}/keys/{key}", func(ctx *router.Context) error {
+		bucketName := ctx.Request.PathValue("bucket")
+		key := ctx.Request.PathValue("key")
 
 		value, err := h.service.Value(bucketName, key)
 		if err != nil {
-			writeErrorResponse(w, err)
-			return
+			return err
 		}
 
-		writeResponse(w, http.StatusOK, value)
+		return ctx.OK(value)
 	})
 
-	mux.HandleFunc("PUT /v1/buckets/{bucket}/keys/{key}", func(w http.ResponseWriter, req *http.Request) {
-		bucketName := req.PathValue("bucket")
-		key := req.PathValue("key")
+	mux.PUT("/v1/buckets/{bucket}/keys/{key}", func(ctx *router.Context) error {
+		bucketName := ctx.Request.PathValue("bucket")
+		key := ctx.Request.PathValue("key")
 
 		var value model.Object
 
-		err := json.NewDecoder(req.Body).Decode(&value)
+		err := json.NewDecoder(ctx.Request.Body).Decode(&value)
 		if err != nil {
-			writeErrorResponse(w, apperror.New(apperror.BadRequestPaylod))
-			return
+			return apperror.New(apperror.BadRequestPaylod)
 		}
 
 		err = h.service.SetValue(bucketName, key, value)
 		if err != nil {
-			writeErrorResponse(w, err)
-			return
+			return err
 		}
 
-		writeResponse(w, http.StatusNoContent, nil)
+		return ctx.NoContent()
 	})
 
-	mux.HandleFunc("DELETE /v1/buckets/{bucket}/keys/{key}", func(w http.ResponseWriter, req *http.Request) {
-		bucketName := req.PathValue("bucket")
-		key := req.PathValue("key")
+	mux.DELETE("/v1/buckets/{bucket}/keys/{key}", func(ctx *router.Context) error {
+		bucketName := ctx.Request.PathValue("bucket")
+		key := ctx.Request.PathValue("key")
 
 		err := h.service.DeleteValue(bucketName, key)
 		if err != nil {
-			writeErrorResponse(w, err)
-			return
+			return err
 		}
 
-		writeResponse(w, http.StatusNoContent, nil)
+		return ctx.NoContent()
 	})
 
-	mux.HandleFunc("GET /v1/buckets/{bucket}/keys", func(w http.ResponseWriter, req *http.Request) {
-		bucketName := req.PathValue("bucket")
-		criteria := req.URL.Query()
+	mux.GET("/v1/buckets/{bucket}/keys", func(ctx *router.Context) error {
+		bucketName := ctx.Request.PathValue("bucket")
+		criteria := ctx.Request.URL.Query()
 
 		keys, err := h.service.FindKeys(bucketName, criteria)
 		if err != nil {
-			writeErrorResponse(w, err)
-			return
+			return err
 		}
 
-		writeResponse(w, http.StatusOK, keys)
+		return ctx.OK(keys)
 	})
 }

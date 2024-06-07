@@ -7,6 +7,7 @@ import (
 	"github.com/jjmrocha/oblivion/api"
 	"github.com/jjmrocha/oblivion/bucket"
 	"github.com/jjmrocha/oblivion/repo"
+	"github.com/jjmrocha/oblivion/router"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -19,9 +20,9 @@ func main() {
 	buckectService := bucket.NewService(repo)
 	handler := api.NewHandler(buckectService)
 	// setup routing
-	mux := http.NewServeMux()
-	handler.SetRoutes(mux)
+	router := router.New()
+	handler.SetRoutes(router)
 	// start
 	log.Println("Server running")
-	log.Fatal(http.ListenAndServe(":9090", mux))
+	log.Fatal(http.ListenAndServe(":9090", router))
 }
