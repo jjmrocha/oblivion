@@ -15,11 +15,11 @@ type Handler struct {
 }
 
 func NewHandler(bucketService *bucket.BucketService) *Handler {
-	api := Handler{
+	handler := Handler{
 		service: bucketService,
 	}
 
-	return &api
+	return &handler
 }
 
 func (h *Handler) SetRoutes(mux *router.Router) {
