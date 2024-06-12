@@ -2,11 +2,6 @@ package router
 
 import "net/http"
 
-type response struct {
-	status  int
-	payload any
-}
-
 type RequestHandler func(*Context) error
 
 type handlerWrapper struct {
