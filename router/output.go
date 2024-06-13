@@ -3,45 +3,52 @@ package router
 import (
 	"encoding/json"
 	"log"
-	"net/http"
 
 	"github.com/jjmrocha/oblivion/apperror"
 )
 
-type errorMsg struct {
-	Status    int    `json:"status"`
-	ErrorCode int    `json:"error-code"`
-	Reason    string `json:"description"`
+type errorPayload struct {
+	Status      int    `json:"status"`
+	ErrorCode   int    `json:"error-code"`
+	Description string `json:"description"`
 }
 
-func writeErrorResponse(w http.ResponseWriter, err error) {
+func writeErrorResponse(ctx *Context, err error) {
 	errorType := apperror.UnexpectedError
-	reason := err.Error()
+	description := err.Error()
 
 	if appErr, ok := err.(*apperror.Error); ok {
 		errorType = appErr.ErrorType
-		reason = appErr.String()
+		description = appErr.String()
 	}
 
 	statusCode := errorType.StatusCode()
-	payload := errorMsg{
-		Status:    statusCode,
-		ErrorCode: errorType.ErrorCode(),
-		Reason:    reason,
+
+	ctx.response = &response{
+		status: statusCode,
+		payload: errorPayload{
+			Status:      statusCode,
+			ErrorCode:   errorType.ErrorCode(),
+			Description: description,
+		},
 	}
 
-	writeResponse(w, statusCode, payload)
+	log.Printf("ERROR => %s %s => %v", ctx.Request.Method, ctx.Request.RequestURI, err.Error())
+
+	writeResponse(ctx)
 }
 
-func writeResponse(w http.ResponseWriter, status int, payload any) {
-	w.WriteHeader(status)
+func writeResponse(ctx *Context) {
+	ctx.Writer.WriteHeader(ctx.response.status)
 
-	if payload != nil {
-		w.Header().Set("Content-Type", "application/json")
+	if ctx.response.payload != nil {
+		ctx.Writer.Header().Set("Content-Type", "application/json")
 
-		err := json.NewEncoder(w).Encode(payload)
+		err := json.NewEncoder(ctx.Writer).Encode(ctx.response.payload)
 		if err != nil {
-			log.Printf("Error writing payload %v to response\n", payload)
+			log.Printf("Error writing payload %v to response\n", ctx.response.payload)
 		}
 	}
+
+	log.Printf("%d => %s %s\n", ctx.response.status, ctx.Request.Method, ctx.Request.RequestURI)
 }

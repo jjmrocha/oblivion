@@ -7,8 +7,9 @@ import (
 type ErrorType int
 
 const (
+	_ ErrorType = iota
 	// Bucket related
-	BucketAlreadyExits ErrorType = iota + 1
+	BucketAlreadyExits
 	BucketNotFound
 	// Keys related
 	KeyNotFound
@@ -28,12 +29,12 @@ const (
 	UnexpectedError
 )
 
-type details struct {
+type config struct {
 	statusCode int
 	template   string
 }
 
-var errorTypeMap = map[ErrorType]details{
+var errorTypes = map[ErrorType]config{
 	BucketAlreadyExits: {
 		statusCode: http.StatusConflict,
 		template:   "Bucket %v already exists",
@@ -93,9 +94,9 @@ func (t ErrorType) ErrorCode() int {
 }
 
 func (t ErrorType) StatusCode() int {
-	return errorTypeMap[t].statusCode
+	return errorTypes[t].statusCode
 }
 
 func (t ErrorType) Template() string {
-	return errorTypeMap[t].template
+	return errorTypes[t].template
 }

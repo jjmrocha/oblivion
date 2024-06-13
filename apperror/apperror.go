@@ -7,7 +7,6 @@ import (
 type Error struct {
 	ErrorType   ErrorType
 	Description string
-	Args        []any
 	Cause       error
 }
 
@@ -21,7 +20,6 @@ func WithCause(errorType ErrorType, cause error, args ...any) error {
 		ErrorType:   errorType,
 		Cause:       cause,
 		Description: errorDesc,
-		Args:        args,
 	}
 	return &err
 }
@@ -31,5 +29,9 @@ func (e *Error) String() string {
 }
 
 func (e *Error) Error() string {
+	if e.Cause != nil {
+		return fmt.Sprintf("%v: %v cause by %v", e.ErrorType, e.Description, e.Cause)
+	}
+
 	return fmt.Sprintf("%v: %v", e.ErrorType, e.Description)
 }

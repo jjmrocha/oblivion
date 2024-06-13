@@ -9,15 +9,15 @@ type handlerWrapper struct {
 }
 
 func (h *handlerWrapper) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	context := Context{
+	context := &Context{
 		Writer:  w,
 		Request: req,
 	}
 
-	if err := h.handler(&context); err != nil {
-		writeErrorResponse(w, err)
+	if err := h.handler(context); err != nil {
+		writeErrorResponse(context, err)
 		return
 	}
 
-	writeResponse(w, context.response.status, context.response.payload)
+	writeResponse(context)
 }
