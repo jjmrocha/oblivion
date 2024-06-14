@@ -19,17 +19,17 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 func (r *Router) GET(path string, handler RequestHandler) {
-	r.multiplexer.Handle("GET "+path, &handlerWrapper{handler})
+	r.multiplexer.Handle("GET "+path, handler)
 }
 
 func (r *Router) POST(path string, handler RequestHandler) {
-	r.multiplexer.Handle("POST "+path, &handlerWrapper{handler})
+	r.multiplexer.Handle("POST "+path, handler)
 }
 
 func (r *Router) DELETE(path string, handler RequestHandler) {
-	r.multiplexer.Handle("DELETE "+path, &handlerWrapper{handler})
+	r.multiplexer.Handle("DELETE "+path, handler)
 }
 
 func (r *Router) PUT(path string, handler RequestHandler) {
-	r.multiplexer.Handle("PUT "+path, &handlerWrapper{handler})
+	r.multiplexer.Handle("PUT "+path, handler)
 }

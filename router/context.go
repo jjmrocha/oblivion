@@ -2,40 +2,34 @@ package router
 
 import "net/http"
 
-type response struct {
-	status  int
-	payload any
-}
-
 type Context struct {
-	Writer   http.ResponseWriter
-	Request  *http.Request
-	response *response
+	Writer  http.ResponseWriter
+	Request *http.Request
 }
 
-func (c *Context) OK(payload any) error {
-	response := response{
-		status:  http.StatusOK,
-		payload: payload,
+func (c *Context) OK(payload any) (*Response, error) {
+	resp := Response{
+		Status:  http.StatusOK,
+		Payload: payload,
 	}
-	c.response = &response
-	return nil
+
+	return &resp, nil
 }
 
-func (c *Context) Created(payload any) error {
-	response := response{
-		status:  http.StatusCreated,
-		payload: payload,
+func (c *Context) Created(payload any) (*Response, error) {
+	resp := Response{
+		Status:  http.StatusCreated,
+		Payload: payload,
 	}
-	c.response = &response
-	return nil
+
+	return &resp, nil
 }
 
-func (c *Context) NoContent() error {
-	response := response{
-		status:  http.StatusNoContent,
-		payload: nil,
+func (c *Context) NoContent() (*Response, error) {
+	resp := Response{
+		Status:  http.StatusNoContent,
+		Payload: nil,
 	}
-	c.response = &response
-	return nil
+
+	return &resp, nil
 }

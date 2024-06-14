@@ -28,48 +28,48 @@ func (h *Handler) SetRoutes(mux *router.Router) {
 }
 
 func setBucketRoutes(mux *router.Router, h *Handler) {
-	mux.GET("/v1/buckets", func(ctx *router.Context) error {
+	mux.GET("/v1/buckets", func(ctx *router.Context) (*router.Response, error) {
 		bucketNames, err := h.service.BucketList()
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		return ctx.OK(bucketNames)
 	})
 
-	mux.POST("/v1/buckets", func(ctx *router.Context) error {
+	mux.POST("/v1/buckets", func(ctx *router.Context) (*router.Response, error) {
 		var request repo.Bucket
 
 		err := json.NewDecoder(ctx.Request.Body).Decode(&request)
 		if err != nil {
-			return apperror.New(apperror.BadRequestPaylod)
+			return nil, apperror.New(apperror.BadRequestPaylod)
 		}
 
 		bucket, err := h.service.CreateBucket(request.Name, request.Schema)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		return ctx.Created(bucket)
 	})
 
-	mux.GET("/v1/buckets/{bucket}", func(ctx *router.Context) error {
+	mux.GET("/v1/buckets/{bucket}", func(ctx *router.Context) (*router.Response, error) {
 		bucketName := ctx.Request.PathValue("bucket")
 
 		bucket, err := h.service.GetBucket(bucketName)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		return ctx.OK(bucket)
 	})
 
-	mux.DELETE("/v1/buckets/{bucket}", func(ctx *router.Context) error {
+	mux.DELETE("/v1/buckets/{bucket}", func(ctx *router.Context) (*router.Response, error) {
 		bucketName := ctx.Request.PathValue("bucket")
 
 		err := h.service.DeleteBucket(bucketName)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		return ctx.NoContent()
@@ -77,19 +77,19 @@ func setBucketRoutes(mux *router.Router, h *Handler) {
 }
 
 func setKeyRoutes(mux *router.Router, h *Handler) {
-	mux.GET("/v1/buckets/{bucket}/keys/{key}", func(ctx *router.Context) error {
+	mux.GET("/v1/buckets/{bucket}/keys/{key}", func(ctx *router.Context) (*router.Response, error) {
 		bucketName := ctx.Request.PathValue("bucket")
 		key := ctx.Request.PathValue("key")
 
 		value, err := h.service.Value(bucketName, key)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		return ctx.OK(value)
 	})
 
-	mux.PUT("/v1/buckets/{bucket}/keys/{key}", func(ctx *router.Context) error {
+	mux.PUT("/v1/buckets/{bucket}/keys/{key}", func(ctx *router.Context) (*router.Response, error) {
 		bucketName := ctx.Request.PathValue("bucket")
 		key := ctx.Request.PathValue("key")
 
@@ -97,36 +97,36 @@ func setKeyRoutes(mux *router.Router, h *Handler) {
 
 		err := json.NewDecoder(ctx.Request.Body).Decode(&value)
 		if err != nil {
-			return apperror.New(apperror.BadRequestPaylod)
+			return nil, apperror.New(apperror.BadRequestPaylod)
 		}
 
 		err = h.service.SetValue(bucketName, key, value)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		return ctx.NoContent()
 	})
 
-	mux.DELETE("/v1/buckets/{bucket}/keys/{key}", func(ctx *router.Context) error {
+	mux.DELETE("/v1/buckets/{bucket}/keys/{key}", func(ctx *router.Context) (*router.Response, error) {
 		bucketName := ctx.Request.PathValue("bucket")
 		key := ctx.Request.PathValue("key")
 
 		err := h.service.DeleteValue(bucketName, key)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		return ctx.NoContent()
 	})
 
-	mux.GET("/v1/buckets/{bucket}/keys", func(ctx *router.Context) error {
+	mux.GET("/v1/buckets/{bucket}/keys", func(ctx *router.Context) (*router.Response, error) {
 		bucketName := ctx.Request.PathValue("bucket")
 		criteria := ctx.Request.URL.Query()
 
 		keys, err := h.service.FindKeys(bucketName, criteria)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		return ctx.OK(keys)

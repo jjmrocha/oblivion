@@ -24,9 +24,9 @@ func writeErrorResponse(ctx *Context, err error) {
 
 	statusCode := errorType.StatusCode()
 
-	ctx.response = &response{
-		status: statusCode,
-		payload: errorPayload{
+	resp := Response{
+		Status: statusCode,
+		Payload: errorPayload{
 			Status:      statusCode,
 			ErrorCode:   errorType.ErrorCode(),
 			Description: description,
@@ -35,20 +35,20 @@ func writeErrorResponse(ctx *Context, err error) {
 
 	log.Printf("ERROR => %s %s => %v", ctx.Request.Method, ctx.Request.RequestURI, err.Error())
 
-	writeResponse(ctx)
+	writeResponse(ctx, &resp)
 }
 
-func writeResponse(ctx *Context) {
-	ctx.Writer.WriteHeader(ctx.response.status)
+func writeResponse(ctx *Context, resp *Response) {
+	ctx.Writer.WriteHeader(resp.Status)
 
-	if ctx.response.payload != nil {
+	if resp.Payload != nil {
 		ctx.Writer.Header().Set("Content-Type", "application/json")
 
-		err := json.NewEncoder(ctx.Writer).Encode(ctx.response.payload)
+		err := json.NewEncoder(ctx.Writer).Encode(resp.Payload)
 		if err != nil {
-			log.Printf("Error writing payload %v to response\n", ctx.response.payload)
+			log.Printf("Error writing payload %v to response\n", resp.Payload)
 		}
 	}
 
-	log.Printf("%d => %s %s\n", ctx.response.status, ctx.Request.Method, ctx.Request.RequestURI)
+	log.Printf("%d => %s %s\n", resp.Status, ctx.Request.Method, ctx.Request.RequestURI)
 }

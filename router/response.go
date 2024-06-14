@@ -2,22 +2,24 @@ package router
 
 import "net/http"
 
-type RequestHandler func(*Context) error
-
-type handlerWrapper struct {
-	handler RequestHandler
+type Response struct {
+	Status  int
+	Payload any
 }
 
-func (h *handlerWrapper) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+type RequestHandler func(*Context) (*Response, error)
+
+func (h RequestHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	context := &Context{
 		Writer:  w,
 		Request: req,
 	}
 
-	if err := h.handler(context); err != nil {
+	resp, err := h(context)
+	if err != nil {
 		writeErrorResponse(context, err)
 		return
 	}
 
-	writeResponse(context)
+	writeResponse(context, resp)
 }
