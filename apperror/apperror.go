@@ -29,9 +29,11 @@ func (e *Error) String() string {
 }
 
 func (e *Error) Error() string {
+	errorMsg := fmt.Sprintf("%v: %v", e.ErrorType, e.Description)
+
 	if e.Cause != nil {
-		return fmt.Sprintf("%v: %v cause by %v", e.ErrorType, e.Description, e.Cause)
+		errorMsg += " cause by " + e.Cause.Error()
 	}
 
-	return fmt.Sprintf("%v: %v", e.ErrorType, e.Description)
+	return errorMsg
 }
