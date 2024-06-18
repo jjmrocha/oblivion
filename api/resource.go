@@ -22,12 +22,12 @@ func NewHandler(bucketService *bucket.BucketService) *Handler {
 	return &handler
 }
 
-func (h *Handler) SetRoutes(mux *router.Router) {
+func (h *Handler) SetRoutes(mux *router.Multiplexer) {
 	setBucketRoutes(mux, h)
 	setKeyRoutes(mux, h)
 }
 
-func setBucketRoutes(mux *router.Router, h *Handler) {
+func setBucketRoutes(mux *router.Multiplexer, h *Handler) {
 	mux.GET("/v1/buckets", func(ctx *router.Context) (*router.Response, error) {
 		bucketNames, err := h.service.BucketList()
 		if err != nil {
@@ -76,7 +76,7 @@ func setBucketRoutes(mux *router.Router, h *Handler) {
 	})
 }
 
-func setKeyRoutes(mux *router.Router, h *Handler) {
+func setKeyRoutes(mux *router.Multiplexer, h *Handler) {
 	mux.GET("/v1/buckets/{bucket}/keys/{key}", func(ctx *router.Context) (*router.Response, error) {
 		bucketName := ctx.Request.PathValue("bucket")
 		key := ctx.Request.PathValue("key")

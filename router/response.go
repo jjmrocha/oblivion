@@ -1,6 +1,10 @@
 package router
 
-import "net/http"
+import (
+	"log"
+	"net/http"
+	"time"
+)
 
 type Response struct {
 	Status  int
@@ -10,16 +14,17 @@ type Response struct {
 type RequestHandler func(*Context) (*Response, error)
 
 func (h RequestHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	context := &Context{
+	ctx := &Context{
 		Writer:  w,
 		Request: req,
+		Start:   time.Now(),
 	}
 
-	resp, err := h(context)
+	resp, err := h(ctx)
 	if err != nil {
-		writeErrorResponse(context, err)
-		return
+		log.Printf("ERROR => %s => %v", ctx.fullRequestURI(), err.Error())
+		resp = errorResponse(err)
 	}
 
-	writeResponse(context, resp)
+	writeResponse(ctx, resp)
 }

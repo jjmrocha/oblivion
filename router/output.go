@@ -13,7 +13,7 @@ type errorPayload struct {
 	Description string `json:"description"`
 }
 
-func writeErrorResponse(ctx *Context, err error) {
+func errorResponse(err error) *Response {
 	errorType := apperror.UnexpectedError
 	description := err.Error()
 
@@ -33,9 +33,7 @@ func writeErrorResponse(ctx *Context, err error) {
 		},
 	}
 
-	log.Printf("ERROR => %s %s => %v", ctx.Request.Method, ctx.Request.RequestURI, err.Error())
-
-	writeResponse(ctx, &resp)
+	return &resp
 }
 
 func writeResponse(ctx *Context, resp *Response) {
@@ -50,5 +48,5 @@ func writeResponse(ctx *Context, resp *Response) {
 		}
 	}
 
-	log.Printf("%d => %s %s\n", resp.Status, ctx.Request.Method, ctx.Request.RequestURI)
+	log.Printf("%d: %s: %v\n", resp.Status, ctx.fullRequestURI(), ctx.duration())
 }
