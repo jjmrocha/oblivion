@@ -5,9 +5,9 @@ import (
 
 	"github.com/jjmrocha/oblivion/apperror"
 	"github.com/jjmrocha/oblivion/bucket"
+	"github.com/jjmrocha/oblivion/httprouter"
 	"github.com/jjmrocha/oblivion/model"
 	"github.com/jjmrocha/oblivion/repo"
-	"github.com/jjmrocha/oblivion/router"
 )
 
 type Handler struct {
@@ -22,13 +22,13 @@ func NewHandler(bucketService *bucket.BucketService) *Handler {
 	return &handler
 }
 
-func (h *Handler) SetRoutes(mux *router.Multiplexer) {
-	setBucketRoutes(mux, h)
-	setKeyRoutes(mux, h)
+func (h *Handler) SetRoutes(router *httprouter.Router) {
+	setBucketRoutes(router, h)
+	setKeyRoutes(router, h)
 }
 
-func setBucketRoutes(mux *router.Multiplexer, h *Handler) {
-	mux.GET("/v1/buckets", func(ctx *router.Context) (*router.Response, error) {
+func setBucketRoutes(router *httprouter.Router, h *Handler) {
+	router.GET("/v1/buckets", func(ctx *httprouter.Context) (*httprouter.Response, error) {
 		bucketNames, err := h.service.BucketList()
 		if err != nil {
 			return nil, err
@@ -37,7 +37,7 @@ func setBucketRoutes(mux *router.Multiplexer, h *Handler) {
 		return ctx.OK(bucketNames)
 	})
 
-	mux.POST("/v1/buckets", func(ctx *router.Context) (*router.Response, error) {
+	router.POST("/v1/buckets", func(ctx *httprouter.Context) (*httprouter.Response, error) {
 		var request repo.Bucket
 
 		err := json.NewDecoder(ctx.Request.Body).Decode(&request)
@@ -53,7 +53,7 @@ func setBucketRoutes(mux *router.Multiplexer, h *Handler) {
 		return ctx.Created(bucket)
 	})
 
-	mux.GET("/v1/buckets/{bucket}", func(ctx *router.Context) (*router.Response, error) {
+	router.GET("/v1/buckets/{bucket}", func(ctx *httprouter.Context) (*httprouter.Response, error) {
 		bucketName := ctx.Request.PathValue("bucket")
 
 		bucket, err := h.service.GetBucket(bucketName)
@@ -64,7 +64,7 @@ func setBucketRoutes(mux *router.Multiplexer, h *Handler) {
 		return ctx.OK(bucket)
 	})
 
-	mux.DELETE("/v1/buckets/{bucket}", func(ctx *router.Context) (*router.Response, error) {
+	router.DELETE("/v1/buckets/{bucket}", func(ctx *httprouter.Context) (*httprouter.Response, error) {
 		bucketName := ctx.Request.PathValue("bucket")
 
 		err := h.service.DeleteBucket(bucketName)
@@ -76,8 +76,8 @@ func setBucketRoutes(mux *router.Multiplexer, h *Handler) {
 	})
 }
 
-func setKeyRoutes(mux *router.Multiplexer, h *Handler) {
-	mux.GET("/v1/buckets/{bucket}/keys/{key}", func(ctx *router.Context) (*router.Response, error) {
+func setKeyRoutes(router *httprouter.Router, h *Handler) {
+	router.GET("/v1/buckets/{bucket}/keys/{key}", func(ctx *httprouter.Context) (*httprouter.Response, error) {
 		bucketName := ctx.Request.PathValue("bucket")
 		key := ctx.Request.PathValue("key")
 
@@ -89,7 +89,7 @@ func setKeyRoutes(mux *router.Multiplexer, h *Handler) {
 		return ctx.OK(value)
 	})
 
-	mux.PUT("/v1/buckets/{bucket}/keys/{key}", func(ctx *router.Context) (*router.Response, error) {
+	router.PUT("/v1/buckets/{bucket}/keys/{key}", func(ctx *httprouter.Context) (*httprouter.Response, error) {
 		bucketName := ctx.Request.PathValue("bucket")
 		key := ctx.Request.PathValue("key")
 
@@ -108,7 +108,7 @@ func setKeyRoutes(mux *router.Multiplexer, h *Handler) {
 		return ctx.NoContent()
 	})
 
-	mux.DELETE("/v1/buckets/{bucket}/keys/{key}", func(ctx *router.Context) (*router.Response, error) {
+	router.DELETE("/v1/buckets/{bucket}/keys/{key}", func(ctx *httprouter.Context) (*httprouter.Response, error) {
 		bucketName := ctx.Request.PathValue("bucket")
 		key := ctx.Request.PathValue("key")
 
@@ -120,7 +120,7 @@ func setKeyRoutes(mux *router.Multiplexer, h *Handler) {
 		return ctx.NoContent()
 	})
 
-	mux.GET("/v1/buckets/{bucket}/keys", func(ctx *router.Context) (*router.Response, error) {
+	router.GET("/v1/buckets/{bucket}/keys", func(ctx *httprouter.Context) (*httprouter.Response, error) {
 		bucketName := ctx.Request.PathValue("bucket")
 		criteria := ctx.Request.URL.Query()
 
