@@ -18,7 +18,7 @@ func (e *Error) Error() string {
 	errorMsg := fmt.Sprintf("%v: %v", e.ErrorType, e.Description)
 
 	if e.Cause != nil {
-		errorMsg += " cause by " + e.Cause.Error()
+		errorMsg += "\n\tcause by " + e.Cause.Error()
 	}
 
 	return errorMsg
