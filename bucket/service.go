@@ -30,14 +30,6 @@ func (s *BucketService) BucketList() ([]string, error) {
 }
 
 func (s *BucketService) CreateBucket(name string, schema []model.Field) (*repo.Bucket, error) {
-	if err := valid.BucketName(name); err != nil {
-		return nil, err
-	}
-
-	if err := valid.Schema(schema); err != nil {
-		return nil, err
-	}
-
 	bucket, err := s.repo.GetBucket(name)
 	if err != nil {
 		return nil, apperror.WithCause(apperror.UnexpectedError, err)
@@ -51,10 +43,6 @@ func (s *BucketService) CreateBucket(name string, schema []model.Field) (*repo.B
 }
 
 func (s *BucketService) GetBucket(name string) (*repo.Bucket, error) {
-	if err := valid.BucketName(name); err != nil {
-		return nil, err
-	}
-
 	bucket, err := s.repo.GetBucket(name)
 
 	if err != nil {
@@ -69,10 +57,6 @@ func (s *BucketService) GetBucket(name string) (*repo.Bucket, error) {
 }
 
 func (s *BucketService) DeleteBucket(name string) error {
-	if err := valid.BucketName(name); err != nil {
-		return err
-	}
-
 	bucket, err := s.repo.GetBucket(name)
 
 	if err != nil {
@@ -87,14 +71,6 @@ func (s *BucketService) DeleteBucket(name string) error {
 }
 
 func (s *BucketService) Value(name string, key string) (model.Object, error) {
-	if err := valid.BucketName(name); err != nil {
-		return nil, err
-	}
-
-	if err := valid.Key(key); err != nil {
-		return nil, err
-	}
-
 	bucket, err := s.repo.GetBucket(name)
 	if err != nil {
 		return nil, apperror.WithCause(apperror.UnexpectedError, err)
@@ -117,14 +93,6 @@ func (s *BucketService) Value(name string, key string) (model.Object, error) {
 }
 
 func (s *BucketService) SetValue(name string, key string, value model.Object) error {
-	if err := valid.BucketName(name); err != nil {
-		return err
-	}
-
-	if err := valid.Key(key); err != nil {
-		return err
-	}
-
 	bucket, err := s.repo.GetBucket(name)
 
 	if err != nil {
@@ -144,14 +112,6 @@ func (s *BucketService) SetValue(name string, key string, value model.Object) er
 }
 
 func (s *BucketService) DeleteValue(name string, key string) error {
-	if err := valid.BucketName(name); err != nil {
-		return err
-	}
-
-	if err := valid.Key(key); err != nil {
-		return err
-	}
-
 	bucket, err := s.repo.GetBucket(name)
 
 	if err != nil {
@@ -166,10 +126,6 @@ func (s *BucketService) DeleteValue(name string, key string) error {
 }
 
 func (s *BucketService) FindKeys(name string, criteria url.Values) ([]string, error) {
-	if err := valid.BucketName(name); err != nil {
-		return nil, err
-	}
-
 	bucket, err := s.repo.GetBucket(name)
 
 	if err != nil {
