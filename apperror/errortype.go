@@ -1,6 +1,7 @@
 package apperror
 
 import (
+	"fmt"
 	"net/http"
 )
 
@@ -97,6 +98,16 @@ func (t ErrorType) StatusCode() int {
 	return errorTypes[t].statusCode
 }
 
-func (t ErrorType) Template() string {
-	return errorTypes[t].template
+func (t ErrorType) NewError(args ...any) error {
+	return t.NewErrorWithCause(nil, args...)
+}
+
+func (t ErrorType) NewErrorWithCause(cause error, args ...any) error {
+	errorMsg := fmt.Sprintf(errorTypes[t].template, args...)
+	err := Error{
+		ErrorType:   t,
+		Cause:       cause,
+		Description: errorMsg,
+	}
+	return &err
 }

@@ -43,7 +43,7 @@ func setBucketRoutes(router *httprouter.Router, h *Handler) {
 
 		err := json.NewDecoder(ctx.Request.Body).Decode(&request)
 		if err != nil {
-			return nil, apperror.New(apperror.BadRequestPaylod)
+			return nil, apperror.BadRequestPaylod.NewErrorWithCause(err)
 		}
 
 		if err := valid.BucketName(request.Name); err != nil {
@@ -130,7 +130,7 @@ func setKeyRoutes(router *httprouter.Router, h *Handler) {
 
 		err := json.NewDecoder(ctx.Request.Body).Decode(&value)
 		if err != nil {
-			return nil, apperror.New(apperror.BadRequestPaylod)
+			return nil, apperror.BadRequestPaylod.NewErrorWithCause(err)
 		}
 
 		err = h.service.SetValue(bucketName, key, value)
