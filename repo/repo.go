@@ -40,7 +40,7 @@ func (r *Repo) BucketNames() ([]string, error) {
 	return bucketList(r.db)
 }
 
-func (r *Repo) NewBucket(name string, schema []model.Field) (*Bucket, error) {
+func (r *Repo) NewBucket(name string, schema []model.Field) (Bucket, error) {
 	exists, err := bucketExists(r.db, name)
 	if err != nil {
 		return nil, err
@@ -83,16 +83,16 @@ func (r *Repo) NewBucket(name string, schema []model.Field) (*Bucket, error) {
 		return nil, err
 	}
 
-	bucket := Bucket{
+	bucket := bucket{
 		repo:   r,
-		Name:   name,
-		Schema: schema,
+		name:   name,
+		schema: schema,
 	}
 
 	return &bucket, nil
 }
 
-func (r *Repo) GetBucket(name string) (*Bucket, error) {
+func (r *Repo) GetBucket(name string) (Bucket, error) {
 	schema, err := readSchema(r.db, name)
 	if err != nil {
 		return nil, err
@@ -102,10 +102,10 @@ func (r *Repo) GetBucket(name string) (*Bucket, error) {
 		return nil, nil
 	}
 
-	bucket := Bucket{
+	bucket := bucket{
 		repo:   r,
-		Name:   name,
-		Schema: schema,
+		name:   name,
+		schema: schema,
 	}
 
 	return &bucket, nil

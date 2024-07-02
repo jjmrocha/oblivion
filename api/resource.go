@@ -7,7 +7,6 @@ import (
 	"github.com/jjmrocha/oblivion/bucket"
 	"github.com/jjmrocha/oblivion/httprouter"
 	"github.com/jjmrocha/oblivion/model"
-	"github.com/jjmrocha/oblivion/repo"
 	"github.com/jjmrocha/oblivion/valid"
 )
 
@@ -39,7 +38,7 @@ func setBucketRoutes(router *httprouter.Router, h *Handler) {
 	})
 
 	router.POST("/v1/buckets", func(ctx *httprouter.Context) (*httprouter.Response, error) {
-		var request repo.Bucket
+		var request bucketRepresentation
 
 		err := json.NewDecoder(ctx.Request.Body).Decode(&request)
 		if err != nil {
@@ -59,7 +58,9 @@ func setBucketRoutes(router *httprouter.Router, h *Handler) {
 			return nil, err
 		}
 
-		return ctx.Created(bucket)
+		response := createBucketRepresentation(bucket)
+
+		return ctx.Created(response)
 	})
 
 	router.GET("/v1/buckets/{bucket}", func(ctx *httprouter.Context) (*httprouter.Response, error) {
@@ -74,7 +75,9 @@ func setBucketRoutes(router *httprouter.Router, h *Handler) {
 			return nil, err
 		}
 
-		return ctx.OK(bucket)
+		response := createBucketRepresentation(bucket)
+
+		return ctx.OK(response)
 	})
 
 	router.DELETE("/v1/buckets/{bucket}", func(ctx *httprouter.Context) (*httprouter.Response, error) {

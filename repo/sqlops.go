@@ -33,14 +33,14 @@ func readSchema(db *sql.DB, bucket string) ([]model.Field, error) {
 	return schema, nil
 }
 
-func buildFindByKeySql(bucket *Bucket) string {
-	columns := make([]string, 0, len(bucket.Schema))
-	for _, field := range bucket.Schema {
+func buildFindByKeySql(bucket *bucket) string {
+	columns := make([]string, 0, len(bucket.schema))
+	for _, field := range bucket.schema {
 		columns = append(columns, field.Name)
 	}
 
 	columnList := strings.Join(columns, ", ")
-	query := "select " + columnList + " from " + bucket.Name + " where key = ?"
+	query := "select " + columnList + " from " + bucket.name + " where key = ?"
 
 	return query
 }
@@ -91,7 +91,7 @@ func valuesForScan(schema []model.Field) []any {
 	return values
 }
 
-func buildSearchQuery(bucket *Bucket, criteria model.Criteria) (string, []any) {
+func buildSearchQuery(bucket *bucket, criteria model.Criteria) (string, []any) {
 	where := ""
 	values := make([]any, 0, len(criteria))
 
@@ -114,7 +114,7 @@ func buildSearchQuery(bucket *Bucket, criteria model.Criteria) (string, []any) {
 		where += "(" + or + ")"
 	}
 
-	query := "select key from " + bucket.Name
+	query := "select key from " + bucket.name
 
 	if len(where) > 0 {
 		query += " where " + where
@@ -172,11 +172,11 @@ func createIndex(tx *sql.Tx, tableName string, column string) error {
 	return err
 }
 
-func updateValue(db *sql.DB, bucket *Bucket, key string, obj model.Object) error {
+func updateValue(db *sql.DB, bucket *bucket, key string, obj model.Object) error {
 	columnList := ""
 	values := make([]any, 0)
 
-	for _, field := range bucket.Schema {
+	for _, field := range bucket.schema {
 		if len(columnList) > 0 {
 			columnList += ", "
 		}
@@ -193,7 +193,7 @@ func updateValue(db *sql.DB, bucket *Bucket, key string, obj model.Object) error
 
 	values = append(values, key)
 
-	query := "update " + bucket.Name + " set " + columnList + " where key = ?"
+	query := "update " + bucket.name + " set " + columnList + " where key = ?"
 
 	stm, err := db.Prepare(query)
 	if err != nil {
@@ -207,7 +207,7 @@ func updateValue(db *sql.DB, bucket *Bucket, key string, obj model.Object) error
 	return err
 }
 
-func insertValue(db *sql.DB, bucket *Bucket, key string, obj model.Object) error {
+func insertValue(db *sql.DB, bucket *bucket, key string, obj model.Object) error {
 	columnCount := len(obj)
 
 	columns := make([]string, 0, columnCount)
@@ -221,7 +221,7 @@ func insertValue(db *sql.DB, bucket *Bucket, key string, obj model.Object) error
 
 	columnList := strings.Join(columns, ", ")
 	paramList := strings.Join(strings.Split(strings.Repeat("?", columnCount), ""), ", ")
-	query := "insert into " + bucket.Name + " (key, " + columnList + ") values (?, " + paramList + ")"
+	query := "insert into " + bucket.name + " (key, " + columnList + ") values (?, " + paramList + ")"
 
 	stm, err := db.Prepare(query)
 	if err != nil {
@@ -235,8 +235,8 @@ func insertValue(db *sql.DB, bucket *Bucket, key string, obj model.Object) error
 	return err
 }
 
-func keyExists(db *sql.DB, bucket *Bucket, key string) (bool, error) {
-	query := "select count(*) from " + bucket.Name + " where key = ?"
+func keyExists(db *sql.DB, bucket *bucket, key string) (bool, error) {
+	query := "select count(*) from " + bucket.name + " where key = ?"
 	stm, err := db.Prepare(query)
 	if err != nil {
 		return false, err

@@ -6,13 +6,21 @@ import (
 	"github.com/jjmrocha/oblivion/model"
 )
 
-type Bucket struct {
+type bucket struct {
 	repo   *Repo
-	Name   string        `json:"name"`
-	Schema []model.Field `json:"schema"`
+	name   string
+	schema []model.Field
 }
 
-func (b *Bucket) Store(key string, value model.Object) error {
+func (b *bucket) Name() string {
+	return b.name
+}
+
+func (b *bucket) Schema() []model.Field {
+	return b.schema
+}
+
+func (b *bucket) Store(key string, value model.Object) error {
 	exists, err := keyExists(b.repo.db, b, key)
 	if err != nil {
 		return err
@@ -25,7 +33,7 @@ func (b *Bucket) Store(key string, value model.Object) error {
 	return insertValue(b.repo.db, b, key, value)
 }
 
-func (b *Bucket) Read(key string) (model.Object, error) {
+func (b *bucket) Read(key string) (model.Object, error) {
 	query := buildFindByKeySql(b)
 	stm, err := b.repo.db.Prepare(query)
 	if err != nil {
@@ -36,7 +44,7 @@ func (b *Bucket) Read(key string) (model.Object, error) {
 
 	row := stm.QueryRow(key)
 
-	values := valuesForScan(b.Schema)
+	values := valuesForScan(b.schema)
 	err = row.Scan(values...)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -46,12 +54,12 @@ func (b *Bucket) Read(key string) (model.Object, error) {
 		return nil, err
 	}
 
-	obj := buildObject(b.Schema, values)
+	obj := buildObject(b.schema, values)
 	return obj, nil
 }
 
-func (b *Bucket) Delete(key string) error {
-	query := "delete from " + b.Name + " where key = ?"
+func (b *bucket) Delete(key string) error {
+	query := "delete from " + b.name + " where key = ?"
 	stm, err := b.repo.db.Prepare(query)
 	if err != nil {
 		return err
@@ -61,7 +69,7 @@ func (b *Bucket) Delete(key string) error {
 	return err
 }
 
-func (b *Bucket) Keys(criteria model.Criteria) ([]string, error) {
+func (b *bucket) Keys(criteria model.Criteria) ([]string, error) {
 	query, values := buildSearchQuery(b, criteria)
 	stm, err := b.repo.db.Prepare(query)
 	if err != nil {

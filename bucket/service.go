@@ -29,7 +29,7 @@ func (s *BucketService) BucketList() ([]string, error) {
 	return bucketList, nil
 }
 
-func (s *BucketService) CreateBucket(name string, schema []model.Field) (*repo.Bucket, error) {
+func (s *BucketService) CreateBucket(name string, schema []model.Field) (repo.Bucket, error) {
 	bucket, err := s.repo.GetBucket(name)
 	if err != nil {
 		return nil, apperror.UnexpectedError.NewErrorWithCause(err)
@@ -42,7 +42,7 @@ func (s *BucketService) CreateBucket(name string, schema []model.Field) (*repo.B
 	return s.repo.NewBucket(name, schema)
 }
 
-func (s *BucketService) GetBucket(name string) (*repo.Bucket, error) {
+func (s *BucketService) GetBucket(name string) (repo.Bucket, error) {
 	bucket, err := s.repo.GetBucket(name)
 
 	if err != nil {
@@ -103,7 +103,7 @@ func (s *BucketService) SetValue(name string, key string, value model.Object) er
 		return apperror.BucketNotFound.NewError(name)
 	}
 
-	err = valid.Object(value, bucket.Schema)
+	err = valid.Object(value, bucket.Schema())
 	if err != nil {
 		return err
 	}
@@ -136,11 +136,11 @@ func (s *BucketService) FindKeys(name string, criteria url.Values) ([]string, er
 		return nil, apperror.BucketNotFound.NewError(name)
 	}
 
-	if err := valid.Criteria(criteria, bucket.Schema); err != nil {
+	if err := valid.Criteria(criteria, bucket.Schema()); err != nil {
 		return nil, err
 	}
 
-	normalized, err := model.Convert(criteria, bucket.Schema)
+	normalized, err := model.Convert(criteria, bucket.Schema())
 	if err != nil {
 		return nil, err
 	}
