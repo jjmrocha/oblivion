@@ -38,7 +38,7 @@ func setBucketRoutes(router *httprouter.Router, h *Handler) {
 	})
 
 	router.POST("/v1/buckets", func(ctx *httprouter.Context) (*httprouter.Response, error) {
-		var request bucketRepresentation
+		var request externalBucket
 
 		err := json.NewDecoder(ctx.Request.Body).Decode(&request)
 		if err != nil {
@@ -58,7 +58,7 @@ func setBucketRoutes(router *httprouter.Router, h *Handler) {
 			return nil, err
 		}
 
-		response := createBucketRepresentation(bucket)
+		response := createExternalBucket(bucket)
 
 		return ctx.Created(response)
 	})
@@ -75,7 +75,7 @@ func setBucketRoutes(router *httprouter.Router, h *Handler) {
 			return nil, err
 		}
 
-		response := createBucketRepresentation(bucket)
+		response := createExternalBucket(bucket)
 
 		return ctx.OK(response)
 	})

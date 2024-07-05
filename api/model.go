@@ -5,13 +5,13 @@ import (
 	"github.com/jjmrocha/oblivion/repo"
 )
 
-type bucketRepresentation struct {
+type externalBucket struct {
 	Name   string        `json:"name"`
 	Schema []model.Field `json:"schema"`
 }
 
-func createBucketRepresentation(bucket repo.Bucket) *bucketRepresentation {
-	rep := bucketRepresentation{
+func createExternalBucket(bucket repo.Bucket) *externalBucket {
+	rep := externalBucket{
 		Name:   bucket.Name(),
 		Schema: bucket.Schema(),
 	}
