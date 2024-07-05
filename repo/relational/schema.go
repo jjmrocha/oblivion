@@ -1,4 +1,4 @@
-package repo
+package relational
 
 import (
 	"encoding/json"

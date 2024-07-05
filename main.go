@@ -7,14 +7,14 @@ import (
 	"github.com/jjmrocha/oblivion/api"
 	"github.com/jjmrocha/oblivion/bucket"
 	"github.com/jjmrocha/oblivion/httprouter"
-	"github.com/jjmrocha/oblivion/repo"
+	"github.com/jjmrocha/oblivion/repo/relational"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
 	// init
-	repo := repo.New("sqlite3", "./test.db")
+	repo := relational.New("sqlite3", "./test.db")
 	defer repo.Close()
 
 	buckectService := bucket.NewService(repo)

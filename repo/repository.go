@@ -1,6 +1,8 @@
 package repo
 
-import "github.com/jjmrocha/oblivion/model"
+import (
+	"github.com/jjmrocha/oblivion/model"
+)
 
 type Repository interface {
 	Close()

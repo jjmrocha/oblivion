@@ -10,10 +10,10 @@ import (
 )
 
 type BucketService struct {
-	repo *repo.Repo
+	repo repo.Repository
 }
 
-func NewService(repo *repo.Repo) *BucketService {
+func NewService(repo repo.Repository) *BucketService {
 	service := BucketService{
 		repo: repo,
 	}

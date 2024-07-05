@@ -1,4 +1,4 @@
-package repo
+package relational
 
 import (
 	"database/sql"
@@ -6,13 +6,14 @@ import (
 
 	"github.com/jjmrocha/oblivion/apperror"
 	"github.com/jjmrocha/oblivion/model"
+	"github.com/jjmrocha/oblivion/repo"
 )
 
-type Repo struct {
+type sqlRepo struct {
 	db *sql.DB
 }
 
-func New(driver string, datasource string) *Repo {
+func New(driver string, datasource string) repo.Repository {
 	db, err := sql.Open(driver, datasource)
 	if err != nil {
 		log.Panicf("Error opening db %v using driver %v: %v", datasource, driver, err)
@@ -23,24 +24,24 @@ func New(driver string, datasource string) *Repo {
 		log.Panicf("Error creating db catalog on %v using driver %v: %v", datasource, driver, err)
 	}
 
-	repo := Repo{
+	repo := sqlRepo{
 		db: db,
 	}
 
 	return &repo
 }
 
-func (r *Repo) Close() {
+func (r *sqlRepo) Close() {
 	if err := r.db.Close(); err != nil {
 		log.Printf("Error closing db: %v\n", err)
 	}
 }
 
-func (r *Repo) BucketNames() ([]string, error) {
+func (r *sqlRepo) BucketNames() ([]string, error) {
 	return bucketList(r.db)
 }
 
-func (r *Repo) NewBucket(name string, schema []model.Field) (Bucket, error) {
+func (r *sqlRepo) NewBucket(name string, schema []model.Field) (repo.Bucket, error) {
 	exists, err := bucketExists(r.db, name)
 	if err != nil {
 		return nil, err
@@ -92,7 +93,7 @@ func (r *Repo) NewBucket(name string, schema []model.Field) (Bucket, error) {
 	return &bucket, nil
 }
 
-func (r *Repo) GetBucket(name string) (Bucket, error) {
+func (r *sqlRepo) GetBucket(name string) (repo.Bucket, error) {
 	schema, err := readSchema(r.db, name)
 	if err != nil {
 		return nil, err
@@ -111,7 +112,7 @@ func (r *Repo) GetBucket(name string) (Bucket, error) {
 	return &bucket, nil
 }
 
-func (r *Repo) DropBucket(name string) error {
+func (r *sqlRepo) DropBucket(name string) error {
 	exists, err := bucketExists(r.db, name)
 	if err != nil {
 		return err

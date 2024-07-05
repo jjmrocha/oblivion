@@ -1,4 +1,4 @@
-package repo
+package relational
 
 import (
 	"database/sql"
@@ -7,7 +7,7 @@ import (
 )
 
 type bucket struct {
-	repo   *Repo
+	repo   *sqlRepo
 	name   string
 	schema []model.Field
 }

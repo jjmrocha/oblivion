@@ -1,4 +1,4 @@
-package repo
+package relational
 
 import (
 	"database/sql"
