@@ -15,9 +15,9 @@ type RequestHandler func(*Context) (*Response, error)
 
 func (h RequestHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ctx := &Context{
-		Writer:  w,
-		Request: req,
-		Start:   time.Now(),
+		Writer:    w,
+		Request:   req,
+		StartedAt: time.Now(),
 	}
 
 	resp, err := h(ctx)

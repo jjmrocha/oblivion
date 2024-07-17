@@ -1,20 +1,21 @@
 package relational
 
 import (
+	"context"
 	"database/sql"
 	"strings"
 
 	"github.com/jjmrocha/oblivion/model"
 )
 
-func readSchema(db *sql.DB, bucket string) ([]model.Field, error) {
-	stm, err := db.Prepare("select schema from oblivion where bucket_name = ?")
+func readSchema(ctx context.Context, db *sql.DB, bucket string) ([]model.Field, error) {
+	stm, err := db.PrepareContext(ctx, "select schema from oblivion where bucket_name = ?")
 	if err != nil {
 		return nil, err
 	}
 	defer stm.Close()
 
-	row := stm.QueryRow(bucket)
+	row := stm.QueryRowContext(ctx, bucket)
 
 	var schemaStr string
 	if err = row.Scan(&schemaStr); err != nil {
@@ -123,8 +124,8 @@ func buildSearchQuery(bucket *bucket, criteria model.Criteria) (string, []any) {
 	return query, values
 }
 
-func bucketExists(db *sql.DB, bucket string) (bool, error) {
-	schema, err := readSchema(db, bucket)
+func bucketExists(ctx context.Context, db *sql.DB, bucket string) (bool, error) {
+	schema, err := readSchema(ctx, db, bucket)
 	if err != nil {
 		return false, err
 	}
@@ -133,7 +134,7 @@ func bucketExists(db *sql.DB, bucket string) (bool, error) {
 	return exists, nil
 }
 
-func createTable(tx *sql.Tx, tableName string, schema []model.Field) error {
+func createTable(ctx context.Context, tx *sql.Tx, tableName string, schema []model.Field) error {
 	query := "create table " + tableName + " (key varchar(50) primary key"
 	for _, field := range schema {
 		query += " , " + field.Name
@@ -153,26 +154,26 @@ func createTable(tx *sql.Tx, tableName string, schema []model.Field) error {
 	}
 	query += ")"
 
-	_, err := tx.Exec(query)
+	_, err := tx.ExecContext(ctx, query)
 	return err
 }
 
-func dropTable(tx *sql.Tx, tableName string) error {
+func dropTable(ctx context.Context, tx *sql.Tx, tableName string) error {
 	query := "drop table " + tableName
 
-	_, err := tx.Exec(query)
+	_, err := tx.ExecContext(ctx, query)
 	return err
 }
 
-func createIndex(tx *sql.Tx, tableName string, column string) error {
+func createIndex(ctx context.Context, tx *sql.Tx, tableName string, column string) error {
 	indexName := "i_" + tableName + "_" + column
 	query := "create index " + indexName + " on " + tableName + " (" + column + ")"
 
-	_, err := tx.Exec(query)
+	_, err := tx.ExecContext(ctx, query)
 	return err
 }
 
-func updateValue(db *sql.DB, bucket *bucket, key string, obj model.Object) error {
+func updateValue(ctx context.Context, db *sql.DB, bucket *bucket, key string, obj model.Object) error {
 	columnList := ""
 	values := make([]any, 0)
 
@@ -195,19 +196,19 @@ func updateValue(db *sql.DB, bucket *bucket, key string, obj model.Object) error
 
 	query := "update " + bucket.name + " set " + columnList + " where key = ?"
 
-	stm, err := db.Prepare(query)
+	stm, err := db.PrepareContext(ctx, query)
 	if err != nil {
 		return err
 	}
 
 	defer stm.Close()
 
-	_, err = stm.Exec(values...)
+	_, err = stm.ExecContext(ctx, values...)
 
 	return err
 }
 
-func insertValue(db *sql.DB, bucket *bucket, key string, obj model.Object) error {
+func insertValue(ctx context.Context, db *sql.DB, bucket *bucket, key string, obj model.Object) error {
 	columnCount := len(obj)
 
 	columns := make([]string, 0, columnCount)
@@ -223,27 +224,27 @@ func insertValue(db *sql.DB, bucket *bucket, key string, obj model.Object) error
 	paramList := strings.Join(strings.Split(strings.Repeat("?", columnCount), ""), ", ")
 	query := "insert into " + bucket.name + " (key, " + columnList + ") values (?, " + paramList + ")"
 
-	stm, err := db.Prepare(query)
+	stm, err := db.PrepareContext(ctx, query)
 	if err != nil {
 		return err
 	}
 
 	defer stm.Close()
 
-	_, err = stm.Exec(values...)
+	_, err = stm.ExecContext(ctx, values...)
 
 	return err
 }
 
-func keyExists(db *sql.DB, bucket *bucket, key string) (bool, error) {
+func keyExists(ctx context.Context, db *sql.DB, bucket *bucket, key string) (bool, error) {
 	query := "select count(*) from " + bucket.name + " where key = ?"
-	stm, err := db.Prepare(query)
+	stm, err := db.PrepareContext(ctx, query)
 	if err != nil {
 		return false, err
 	}
 	defer stm.Close()
 
-	row := stm.QueryRow(key)
+	row := stm.QueryRowContext(ctx, key)
 
 	var count int
 	if err = row.Scan(&count); err != nil {

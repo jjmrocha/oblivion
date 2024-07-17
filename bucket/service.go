@@ -1,6 +1,7 @@
 package bucket
 
 import (
+	"context"
 	"net/url"
 
 	"github.com/jjmrocha/oblivion/apperror"
@@ -20,8 +21,8 @@ func NewService(repo repo.Repository) *BucketService {
 	return &service
 }
 
-func (s *BucketService) BucketList() ([]string, error) {
-	bucketList, err := s.repo.BucketNames()
+func (s *BucketService) BucketList(ctx context.Context) ([]string, error) {
+	bucketList, err := s.repo.BucketNames(ctx)
 	if err != nil {
 		return nil, apperror.UnexpectedError.NewErrorWithCause(err)
 	}
@@ -29,8 +30,8 @@ func (s *BucketService) BucketList() ([]string, error) {
 	return bucketList, nil
 }
 
-func (s *BucketService) CreateBucket(name string, schema []model.Field) (repo.Bucket, error) {
-	bucket, err := s.repo.GetBucket(name)
+func (s *BucketService) CreateBucket(ctx context.Context, name string, schema []model.Field) (repo.Bucket, error) {
+	bucket, err := s.repo.GetBucket(ctx, name)
 	if err != nil {
 		return nil, apperror.UnexpectedError.NewErrorWithCause(err)
 	}
@@ -39,11 +40,11 @@ func (s *BucketService) CreateBucket(name string, schema []model.Field) (repo.Bu
 		return nil, apperror.BucketAlreadyExits.NewError(name)
 	}
 
-	return s.repo.NewBucket(name, schema)
+	return s.repo.NewBucket(ctx, name, schema)
 }
 
-func (s *BucketService) GetBucket(name string) (repo.Bucket, error) {
-	bucket, err := s.repo.GetBucket(name)
+func (s *BucketService) GetBucket(ctx context.Context, name string) (repo.Bucket, error) {
+	bucket, err := s.repo.GetBucket(ctx, name)
 
 	if err != nil {
 		return nil, apperror.UnexpectedError.NewErrorWithCause(err)
@@ -56,8 +57,8 @@ func (s *BucketService) GetBucket(name string) (repo.Bucket, error) {
 	return bucket, nil
 }
 
-func (s *BucketService) DeleteBucket(name string) error {
-	bucket, err := s.repo.GetBucket(name)
+func (s *BucketService) DeleteBucket(ctx context.Context, name string) error {
+	bucket, err := s.repo.GetBucket(ctx, name)
 
 	if err != nil {
 		return apperror.UnexpectedError.NewErrorWithCause(err)
@@ -67,11 +68,11 @@ func (s *BucketService) DeleteBucket(name string) error {
 		return apperror.BucketNotFound.NewError(name)
 	}
 
-	return s.repo.DropBucket(name)
+	return s.repo.DropBucket(ctx, name)
 }
 
-func (s *BucketService) Value(name string, key string) (model.Object, error) {
-	bucket, err := s.repo.GetBucket(name)
+func (s *BucketService) Value(ctx context.Context, name string, key string) (model.Object, error) {
+	bucket, err := s.repo.GetBucket(ctx, name)
 	if err != nil {
 		return nil, apperror.UnexpectedError.NewErrorWithCause(err)
 	}
@@ -80,7 +81,7 @@ func (s *BucketService) Value(name string, key string) (model.Object, error) {
 		return nil, apperror.BucketNotFound.NewError(name)
 	}
 
-	object, err := bucket.Read(key)
+	object, err := bucket.Read(ctx, key)
 	if err != nil {
 		return nil, apperror.UnexpectedError.NewErrorWithCause(err)
 	}
@@ -92,8 +93,8 @@ func (s *BucketService) Value(name string, key string) (model.Object, error) {
 	return object, nil
 }
 
-func (s *BucketService) SetValue(name string, key string, value model.Object) error {
-	bucket, err := s.repo.GetBucket(name)
+func (s *BucketService) SetValue(ctx context.Context, name string, key string, value model.Object) error {
+	bucket, err := s.repo.GetBucket(ctx, name)
 
 	if err != nil {
 		return apperror.UnexpectedError.NewErrorWithCause(err)
@@ -108,11 +109,11 @@ func (s *BucketService) SetValue(name string, key string, value model.Object) er
 		return err
 	}
 
-	return bucket.Store(key, value)
+	return bucket.Store(ctx, key, value)
 }
 
-func (s *BucketService) DeleteValue(name string, key string) error {
-	bucket, err := s.repo.GetBucket(name)
+func (s *BucketService) DeleteValue(ctx context.Context, name string, key string) error {
+	bucket, err := s.repo.GetBucket(ctx, name)
 
 	if err != nil {
 		return apperror.UnexpectedError.NewErrorWithCause(err)
@@ -122,11 +123,11 @@ func (s *BucketService) DeleteValue(name string, key string) error {
 		return apperror.BucketNotFound.NewError(name)
 	}
 
-	return bucket.Delete(key)
+	return bucket.Delete(ctx, key)
 }
 
-func (s *BucketService) FindKeys(name string, criteria url.Values) ([]string, error) {
-	bucket, err := s.repo.GetBucket(name)
+func (s *BucketService) FindKeys(ctx context.Context, name string, criteria url.Values) ([]string, error) {
+	bucket, err := s.repo.GetBucket(ctx, name)
 
 	if err != nil {
 		return nil, apperror.UnexpectedError.NewErrorWithCause(err)
@@ -145,5 +146,5 @@ func (s *BucketService) FindKeys(name string, criteria url.Values) ([]string, er
 		return nil, err
 	}
 
-	return bucket.Keys(normalized)
+	return bucket.Keys(ctx, normalized)
 }

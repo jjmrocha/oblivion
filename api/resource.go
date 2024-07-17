@@ -29,7 +29,7 @@ func (h *Handler) SetRoutes(router *httprouter.Router) {
 
 func setBucketRoutes(router *httprouter.Router, h *Handler) {
 	router.GET("/v1/buckets", func(ctx *httprouter.Context) (*httprouter.Response, error) {
-		bucketNames, err := h.service.BucketList()
+		bucketNames, err := h.service.BucketList(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -53,7 +53,7 @@ func setBucketRoutes(router *httprouter.Router, h *Handler) {
 			return nil, err
 		}
 
-		bucket, err := h.service.CreateBucket(request.Name, request.Schema)
+		bucket, err := h.service.CreateBucket(ctx, request.Name, request.Schema)
 		if err != nil {
 			return nil, err
 		}
@@ -70,7 +70,7 @@ func setBucketRoutes(router *httprouter.Router, h *Handler) {
 			return nil, err
 		}
 
-		bucket, err := h.service.GetBucket(bucketName)
+		bucket, err := h.service.GetBucket(ctx, bucketName)
 		if err != nil {
 			return nil, err
 		}
@@ -87,7 +87,7 @@ func setBucketRoutes(router *httprouter.Router, h *Handler) {
 			return nil, err
 		}
 
-		err := h.service.DeleteBucket(bucketName)
+		err := h.service.DeleteBucket(ctx, bucketName)
 		if err != nil {
 			return nil, err
 		}
@@ -109,7 +109,7 @@ func setKeyRoutes(router *httprouter.Router, h *Handler) {
 			return nil, err
 		}
 
-		value, err := h.service.Value(bucketName, key)
+		value, err := h.service.Value(ctx, bucketName, key)
 		if err != nil {
 			return nil, err
 		}
@@ -136,7 +136,7 @@ func setKeyRoutes(router *httprouter.Router, h *Handler) {
 			return nil, apperror.BadRequestPaylod.NewErrorWithCause(err)
 		}
 
-		err = h.service.SetValue(bucketName, key, value)
+		err = h.service.SetValue(ctx, bucketName, key, value)
 		if err != nil {
 			return nil, err
 		}
@@ -156,7 +156,7 @@ func setKeyRoutes(router *httprouter.Router, h *Handler) {
 			return nil, err
 		}
 
-		err := h.service.DeleteValue(bucketName, key)
+		err := h.service.DeleteValue(ctx, bucketName, key)
 		if err != nil {
 			return nil, err
 		}
@@ -172,7 +172,7 @@ func setKeyRoutes(router *httprouter.Router, h *Handler) {
 			return nil, err
 		}
 
-		keys, err := h.service.FindKeys(bucketName, criteria)
+		keys, err := h.service.FindKeys(ctx, bucketName, criteria)
 		if err != nil {
 			return nil, err
 		}

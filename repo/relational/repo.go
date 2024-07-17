@@ -1,6 +1,7 @@
 package relational
 
 import (
+	"context"
 	"database/sql"
 	"log"
 
@@ -19,7 +20,7 @@ func New(driver string, datasource string) repo.Repository {
 		log.Panicf("Error opening db %v using driver %v: %v", datasource, driver, err)
 	}
 
-	err = createCatalogIfNotExist(db)
+	err = createCatalogIfNotExist(context.Background(), db)
 	if err != nil {
 		log.Panicf("Error creating db catalog on %v using driver %v: %v", datasource, driver, err)
 	}
@@ -37,12 +38,12 @@ func (r *sqlRepo) Close() {
 	}
 }
 
-func (r *sqlRepo) BucketNames() ([]string, error) {
-	return bucketList(r.db)
+func (r *sqlRepo) BucketNames(ctx context.Context) ([]string, error) {
+	return bucketList(ctx, r.db)
 }
 
-func (r *sqlRepo) NewBucket(name string, schema []model.Field) (repo.Bucket, error) {
-	exists, err := bucketExists(r.db, name)
+func (r *sqlRepo) NewBucket(ctx context.Context, name string, schema []model.Field) (repo.Bucket, error) {
+	exists, err := bucketExists(ctx, r.db, name)
 	if err != nil {
 		return nil, err
 	}
@@ -51,18 +52,18 @@ func (r *sqlRepo) NewBucket(name string, schema []model.Field) (repo.Bucket, err
 		return nil, apperror.BucketAlreadyExits.NewError(name)
 	}
 
-	tx, err := r.db.Begin()
+	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	err = addBucketToCatalog(tx, name, schema)
+	err = addBucketToCatalog(ctx, tx, name, schema)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
 	}
 
-	err = createTable(tx, name, schema)
+	err = createTable(ctx, tx, name, schema)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
@@ -70,7 +71,7 @@ func (r *sqlRepo) NewBucket(name string, schema []model.Field) (repo.Bucket, err
 
 	for _, field := range schema {
 		if field.Indexed {
-			err = createIndex(tx, name, field.Name)
+			err = createIndex(ctx, tx, name, field.Name)
 			if err != nil {
 				tx.Rollback()
 				return nil, err
@@ -93,8 +94,8 @@ func (r *sqlRepo) NewBucket(name string, schema []model.Field) (repo.Bucket, err
 	return &bucket, nil
 }
 
-func (r *sqlRepo) GetBucket(name string) (repo.Bucket, error) {
-	schema, err := readSchema(r.db, name)
+func (r *sqlRepo) GetBucket(ctx context.Context, name string) (repo.Bucket, error) {
+	schema, err := readSchema(ctx, r.db, name)
 	if err != nil {
 		return nil, err
 	}
@@ -112,8 +113,8 @@ func (r *sqlRepo) GetBucket(name string) (repo.Bucket, error) {
 	return &bucket, nil
 }
 
-func (r *sqlRepo) DropBucket(name string) error {
-	exists, err := bucketExists(r.db, name)
+func (r *sqlRepo) DropBucket(ctx context.Context, name string) error {
+	exists, err := bucketExists(ctx, r.db, name)
 	if err != nil {
 		return err
 	}
@@ -122,18 +123,18 @@ func (r *sqlRepo) DropBucket(name string) error {
 		return apperror.BucketNotFound.NewError(name)
 	}
 
-	tx, err := r.db.Begin()
+	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
 
-	err = removeBucketFromCatalog(tx, name)
+	err = removeBucketFromCatalog(ctx, tx, name)
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
 
-	err = dropTable(tx, name)
+	err = dropTable(ctx, tx, name)
 	if err != nil {
 		tx.Rollback()
 		return err
