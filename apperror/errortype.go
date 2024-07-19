@@ -98,11 +98,11 @@ func (t ErrorType) StatusCode() int {
 	return errorTypes[t].statusCode
 }
 
-func (t ErrorType) NewError(args ...any) error {
-	return t.NewErrorWithCause(nil, args...)
+func (t ErrorType) New(args ...any) error {
+	return t.WithCause(nil, args...)
 }
 
-func (t ErrorType) NewErrorWithCause(cause error, args ...any) error {
+func (t ErrorType) WithCause(cause error, args ...any) error {
 	errorMsg := fmt.Sprintf(errorTypes[t].template, args...)
 	err := Error{
 		ErrorType:   t,

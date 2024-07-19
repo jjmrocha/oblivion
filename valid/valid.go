@@ -22,13 +22,13 @@ var (
 
 func BucketName(name string) error {
 	if len(name) == 0 || len(name) > 30 {
-		return apperror.InvalidBucketName.NewError(name)
+		return apperror.InvalidBucketName.New(name)
 	}
 
 	matched := bucketNameRegExp.MatchString(name)
 
 	if !matched {
-		return apperror.InvalidBucketName.NewError(name)
+		return apperror.InvalidBucketName.New(name)
 	}
 
 	return nil
@@ -36,13 +36,13 @@ func BucketName(name string) error {
 
 func FieldName(name string) error {
 	if len(name) == 0 || len(name) > 30 {
-		return apperror.InvalidFieldName.NewError(name)
+		return apperror.InvalidFieldName.New(name)
 	}
 
 	matched := fieldNameRegExp.MatchString(name)
 
 	if !matched {
-		return apperror.InvalidFieldName.NewError(name)
+		return apperror.InvalidFieldName.New(name)
 	}
 
 	return nil
@@ -50,13 +50,13 @@ func FieldName(name string) error {
 
 func DataType(dataType model.DataType) error {
 	if len(dataType) == 0 {
-		return apperror.InvalidFieldType.NewError(dataType)
+		return apperror.InvalidFieldType.New(dataType)
 	}
 
 	if dataType != model.StringDataType &&
 		dataType != model.NumberDataType &&
 		dataType != model.BoolDataType {
-		return apperror.InvalidFieldType.NewError(dataType)
+		return apperror.InvalidFieldType.New(dataType)
 	}
 
 	return nil
@@ -64,7 +64,7 @@ func DataType(dataType model.DataType) error {
 
 func Schema(schema []model.Field) error {
 	if len(schema) == 0 {
-		return apperror.SchemaMissing.NewError()
+		return apperror.SchemaMissing.New()
 	}
 
 	for _, field := range schema {
@@ -82,13 +82,13 @@ func Schema(schema []model.Field) error {
 
 func Key(value string) error {
 	if len(value) == 0 || len(value) > 50 {
-		return apperror.InvalidKey.NewError(value)
+		return apperror.InvalidKey.New(value)
 	}
 
 	matched := keyRegExp.MatchString(value)
 
 	if !matched {
-		return apperror.InvalidKey.NewError(value)
+		return apperror.InvalidKey.New(value)
 	}
 
 	return nil
@@ -100,11 +100,11 @@ func Object(obj model.Object, schema []model.Field) error {
 	for name, value := range obj {
 		field, found := fieldMap[name]
 		if !found {
-			return apperror.UnknownField.NewError(name)
+			return apperror.UnknownField.New(name)
 		}
 
 		if !field.Type.ValidValue(value) {
-			return apperror.InvalidField.NewError(name)
+			return apperror.InvalidField.New(name)
 		}
 	}
 
@@ -114,7 +114,7 @@ func Object(obj model.Object, schema []model.Field) error {
 		}
 
 		if _, found := obj[field.Name]; !found {
-			return apperror.MissingField.NewError(field.Name)
+			return apperror.MissingField.New(field.Name)
 		}
 	}
 
@@ -126,7 +126,7 @@ func Criteria(criteria url.Values, schema []model.Field) error {
 
 	for name := range criteria {
 		if _, found := fieldMap[name]; !found {
-			return apperror.UnknownField.NewError(name)
+			return apperror.UnknownField.New(name)
 		}
 	}
 

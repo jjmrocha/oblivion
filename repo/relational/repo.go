@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"log"
+	"time"
 
 	"github.com/jjmrocha/oblivion/apperror"
 	"github.com/jjmrocha/oblivion/model"
@@ -20,7 +21,10 @@ func New(driver string, datasource string) repo.Repository {
 		log.Panicf("Error opening db %v using driver %v: %v", datasource, driver, err)
 	}
 
-	err = createCatalogIfNotExist(context.Background(), db)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	err = createCatalogIfNotExist(ctx, db)
 	if err != nil {
 		log.Panicf("Error creating db catalog on %v using driver %v: %v", datasource, driver, err)
 	}
@@ -49,7 +53,7 @@ func (r *sqlRepo) NewBucket(ctx context.Context, name string, schema []model.Fie
 	}
 
 	if exists {
-		return nil, apperror.BucketAlreadyExits.NewError(name)
+		return nil, apperror.BucketAlreadyExits.New(name)
 	}
 
 	tx, err := r.db.BeginTx(ctx, nil)
@@ -120,7 +124,7 @@ func (r *sqlRepo) DropBucket(ctx context.Context, name string) error {
 	}
 
 	if !exists {
-		return apperror.BucketNotFound.NewError(name)
+		return apperror.BucketNotFound.New(name)
 	}
 
 	tx, err := r.db.BeginTx(ctx, nil)

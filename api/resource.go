@@ -1,7 +1,9 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/jjmrocha/oblivion/apperror"
 	"github.com/jjmrocha/oblivion/bucket"
@@ -29,7 +31,10 @@ func (h *Handler) SetRoutes(router *httprouter.Router) {
 
 func setBucketRoutes(router *httprouter.Router, h *Handler) {
 	router.GET("/v1/buckets", func(ctx *httprouter.Context) (*httprouter.Response, error) {
-		bucketNames, err := h.service.BucketList(ctx)
+		c, cancel := context.WithTimeout(ctx, time.Second)
+		defer cancel()
+
+		bucketNames, err := h.service.BucketList(c)
 		if err != nil {
 			return nil, err
 		}
@@ -42,7 +47,7 @@ func setBucketRoutes(router *httprouter.Router, h *Handler) {
 
 		err := json.NewDecoder(ctx.Request.Body).Decode(&request)
 		if err != nil {
-			return nil, apperror.BadRequestPaylod.NewErrorWithCause(err)
+			return nil, apperror.BadRequestPaylod.WithCause(err)
 		}
 
 		if err := valid.BucketName(request.Name); err != nil {
@@ -53,7 +58,10 @@ func setBucketRoutes(router *httprouter.Router, h *Handler) {
 			return nil, err
 		}
 
-		bucket, err := h.service.CreateBucket(ctx, request.Name, request.Schema)
+		c, cancel := context.WithTimeout(ctx, 3*time.Second)
+		defer cancel()
+
+		bucket, err := h.service.CreateBucket(c, request.Name, request.Schema)
 		if err != nil {
 			return nil, err
 		}
@@ -70,7 +78,10 @@ func setBucketRoutes(router *httprouter.Router, h *Handler) {
 			return nil, err
 		}
 
-		bucket, err := h.service.GetBucket(ctx, bucketName)
+		c, cancel := context.WithTimeout(ctx, time.Second)
+		defer cancel()
+
+		bucket, err := h.service.GetBucket(c, bucketName)
 		if err != nil {
 			return nil, err
 		}
@@ -87,7 +98,10 @@ func setBucketRoutes(router *httprouter.Router, h *Handler) {
 			return nil, err
 		}
 
-		err := h.service.DeleteBucket(ctx, bucketName)
+		c, cancel := context.WithTimeout(ctx, 3*time.Second)
+		defer cancel()
+
+		err := h.service.DeleteBucket(c, bucketName)
 		if err != nil {
 			return nil, err
 		}
@@ -109,7 +123,10 @@ func setKeyRoutes(router *httprouter.Router, h *Handler) {
 			return nil, err
 		}
 
-		value, err := h.service.Value(ctx, bucketName, key)
+		c, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
+		defer cancel()
+
+		value, err := h.service.Value(c, bucketName, key)
 		if err != nil {
 			return nil, err
 		}
@@ -133,10 +150,13 @@ func setKeyRoutes(router *httprouter.Router, h *Handler) {
 
 		err := json.NewDecoder(ctx.Request.Body).Decode(&value)
 		if err != nil {
-			return nil, apperror.BadRequestPaylod.NewErrorWithCause(err)
+			return nil, apperror.BadRequestPaylod.WithCause(err)
 		}
 
-		err = h.service.SetValue(ctx, bucketName, key, value)
+		c, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
+		defer cancel()
+
+		err = h.service.SetValue(c, bucketName, key, value)
 		if err != nil {
 			return nil, err
 		}
@@ -156,7 +176,10 @@ func setKeyRoutes(router *httprouter.Router, h *Handler) {
 			return nil, err
 		}
 
-		err := h.service.DeleteValue(ctx, bucketName, key)
+		c, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
+		defer cancel()
+
+		err := h.service.DeleteValue(c, bucketName, key)
 		if err != nil {
 			return nil, err
 		}
@@ -172,7 +195,10 @@ func setKeyRoutes(router *httprouter.Router, h *Handler) {
 			return nil, err
 		}
 
-		keys, err := h.service.FindKeys(ctx, bucketName, criteria)
+		c, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
+		defer cancel()
+
+		keys, err := h.service.FindKeys(c, bucketName, criteria)
 		if err != nil {
 			return nil, err
 		}
