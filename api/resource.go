@@ -35,8 +35,8 @@ func setBucketRoutes(router *httprouter.Router, h *Handler) {
 		c, cancel := context.WithTimeout(ctx, time.Second)
 		defer cancel()
 
-		bucketNames, err := future.Async(func(p future.Promise[[]string]) {
-			p.Resolve(h.service.BucketList(c))
+		bucketNames, err := future.Async(func() ([]string, error) {
+			return h.service.BucketList(c)
 		}).Await()
 		if err != nil {
 			return nil, err

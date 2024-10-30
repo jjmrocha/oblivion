@@ -2,6 +2,8 @@ package future
 
 import "time"
 
+const zeroDuration = 0 * time.Nanosecond
+
 type payload[T any] struct {
 	val T
 	err error
@@ -9,13 +11,21 @@ type payload[T any] struct {
 
 type Promise[T any] chan payload[T]
 
+type Optional[T any] struct {
+	Present bool
+	val     T
+	err     error
+}
+
 func NewPromise[T any]() Promise[T] {
 	return make(chan payload[T])
 }
 
-func Async[T any](fa func(Promise[T])) Promise[T] {
+func Async[T any](provider func() (T, error)) Promise[T] {
 	f := NewPromise[T]()
-	go fa(f)
+	go func() {
+		f.Resolve(provider())
+	}()
 	return f
 }
 
@@ -49,4 +59,20 @@ func (f Promise[T]) AwaitWithTimeout(t time.Duration) (T, error, bool) {
 		var zero T
 		return zero, nil, false
 	}
+}
+
+func (f Promise[T]) Get() Optional[T] {
+	val, err, present := f.AwaitWithTimeout(zeroDuration)
+
+	return Optional[T]{
+		Present: present,
+		val:     val,
+		err:     err,
+	}
+}
+
+func (f Promise[T]) Then(receiver func(T any, err error)) {
+	go func() {
+		receiver(f.Await())
+	}()
 }
