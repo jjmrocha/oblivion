@@ -1,6 +1,8 @@
 package future
 
-import "time"
+import (
+	"time"
+)
 
 const zeroDuration = 0 * time.Nanosecond
 
@@ -71,8 +73,8 @@ func (f Promise[T]) Get() Optional[T] {
 	}
 }
 
-func (f Promise[T]) Then(receiver func(T any, err error)) {
+func (f Promise[T]) Then(consumer func(T, error)) {
 	go func() {
-		receiver(f.Await())
+		consumer(f.Await())
 	}()
 }
