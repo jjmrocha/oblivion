@@ -13,8 +13,8 @@ type Promise[T any] chan payload[T]
 
 type Optional[T any] struct {
 	Present bool
-	val     T
-	err     error
+	Value   T
+	Err     error
 }
 
 func NewPromise[T any]() Promise[T] {
@@ -66,8 +66,8 @@ func (f Promise[T]) Get() Optional[T] {
 
 	return Optional[T]{
 		Present: present,
-		val:     val,
-		err:     err,
+		Value:   val,
+		Err:     err,
 	}
 }
 
