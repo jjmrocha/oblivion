@@ -5,7 +5,6 @@ import (
 	"net/url"
 
 	"github.com/jjmrocha/oblivion/apperror"
-	"github.com/jjmrocha/oblivion/future"
 	"github.com/jjmrocha/oblivion/model"
 	"github.com/jjmrocha/oblivion/repo"
 	"github.com/jjmrocha/oblivion/valid"
@@ -29,16 +28,6 @@ func (s *BucketService) BucketList(ctx context.Context) ([]string, error) {
 	}
 
 	return bucketList, nil
-}
-
-func (s *BucketService) AsyncCreateBucket(ctx context.Context, name string, schema []model.Field) future.Promise[repo.Bucket] {
-	f := future.NewPromise[repo.Bucket]()
-
-	go func() {
-		f.Resolve(s.CreateBucket(ctx, name, schema))
-	}()
-
-	return f
 }
 
 func (s *BucketService) CreateBucket(ctx context.Context, name string, schema []model.Field) (repo.Bucket, error) {

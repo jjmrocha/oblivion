@@ -7,7 +7,6 @@ import (
 
 	"github.com/jjmrocha/oblivion/apperror"
 	"github.com/jjmrocha/oblivion/bucket"
-	"github.com/jjmrocha/oblivion/future"
 	"github.com/jjmrocha/oblivion/httprouter"
 	"github.com/jjmrocha/oblivion/model"
 	"github.com/jjmrocha/oblivion/valid"
@@ -35,9 +34,7 @@ func setBucketRoutes(router *httprouter.Router, h *Handler) {
 		c, cancel := context.WithTimeout(ctx, time.Second)
 		defer cancel()
 
-		bucketNames, err := future.Async(func() ([]string, error) {
-			return h.service.BucketList(c)
-		}).Await()
+		bucketNames, err := h.service.BucketList(c)
 		if err != nil {
 			return nil, err
 		}
@@ -64,7 +61,7 @@ func setBucketRoutes(router *httprouter.Router, h *Handler) {
 		c, cancel := context.WithTimeout(ctx, 3*time.Second)
 		defer cancel()
 
-		bucket, err := h.service.AsyncCreateBucket(c, request.Name, request.Schema).Await()
+		bucket, err := h.service.CreateBucket(c, request.Name, request.Schema)
 		if err != nil {
 			return nil, err
 		}
